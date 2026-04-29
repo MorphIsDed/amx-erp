@@ -1,0 +1,23 @@
+# Ensure consistent line endings across platforms
+* text=auto
+
+# Disable automatic line ending conversion for binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.eot binary
+*.otf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.bz2 binary
+*.tgz binary
+*.jar binary
+*.exe binary
+*.dll binary

@@ -1,53 +1,74 @@
-# Turborepo starter
+# AMX ERP Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+This repository is a Turborepo-based monorepo containing a NestJS API and a Next.js web app.
 
-## Using this example
+## Project structure
 
-Run the following command:
+- `apps/api` — NestJS backend API
+- `apps/web` — Next.js frontend app
+- `packages/eslint-config` — shared ESLint configs
+- `packages/typescript-config` — shared TypeScript configs
+- `packages/ui` — shared UI components
 
-```sh
-npx create-turbo@latest
+## Requirements
+
+See `requirements.md` for the required tools, environment, and repository setup guidance.
+
+## Getting started
+
+1. Install dependencies from the repository root:
+
+```powershell
+pnpm install
 ```
 
-## What's inside?
+2. Start both apps in development mode from the root:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```powershell
+pnpm dev
 ```
 
-Without global `turbo`, use your package manager:
+3. Open the application in your browser:
 
-```sh
-cd my-turborepo
-npx turbo build
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3000` if the API is started separately, but note the API does not expose a frontend homepage by default.
+
+## Run a single app
+
+### Start the API only
+
+```powershell
+cd apps/api
+pnpm run start:dev
+```
+
+### Start the web app only
+
+```powershell
+cd apps/web
+pnpm run dev
+```
+
+## Build
+
+From the root:
+
+```powershell
+pnpm build
+```
+
+## Commit and Git guidance
+
+- Open the repo at the root folder: `D:\amx-erp`
+- Do not keep nested `.git` folders inside subprojects such as `apps/api`
+- If you see line-ending warnings, configure Git with `core.autocrlf` or add `.gitattributes`
+
+## Notes
+
+- `apps/api` is a backend service and does not necessarily render a homepage at `/`
+- `apps/web` is the frontend app and is the main browser entrypoint
+- If you want the repo to be clean, make sure there are no nested Git repositories in subfolders
+
 pnpm dlx turbo build
 pnpm exec turbo build
 ```
