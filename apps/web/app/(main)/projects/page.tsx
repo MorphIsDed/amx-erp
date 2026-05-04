@@ -1,27 +1,54 @@
-import Table from "@/components/ui/table";
+"use client";
 
-const tasks = [
-  { id: 1, name: "Build API", status: "In Progress" },
-  { id: 2, name: "Design UI", status: "Completed" },
-];
+import { useState } from "react";
+import { useProjectStore } from "@/lib/store";
 
 export default function ProjectsPage() {
+  const { tasks, addTask } = useProjectStore();
+  const [title, setTitle] = useState("");
+
+  const createTask = () => {
+    addTask({
+      id: Date.now().toString(),
+      title,
+      status: "Todo",
+    });
+    setTitle("");
+  };
+
+  const columns = ["Todo", "In Progress", "Done"] as const;
+
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Projects</h1>
 
-      <button className="bg-blue-500 px-4 py-2 text-white rounded">
-        Add Task
-      </button>
+      <div className="flex gap-2">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="New task"
+          className="border p-2"
+        />
+        <button onClick={createTask} className="bg-blue-500 px-3 text-white">
+          Add
+        </button>
+      </div>
 
-      <Table headers={["Task", "Status"]}>
-        {tasks.map((task) => (
-          <tr key={task.id} className="border-t">
-            <td className="p-2">{task.name}</td>
-            <td className="p-2">{task.status}</td>
-          </tr>
+      <div className="grid grid-cols-3 gap-4">
+        {columns.map((col) => (
+          <div key={col} className="border p-3 rounded">
+            <h2 className="font-semibold mb-2">{col}</h2>
+
+            {tasks
+              .filter((t) => t.status === col)
+              .map((t) => (
+                <div key={t.id} className="border p-2 mb-2 rounded">
+                  {t.title}
+                </div>
+              ))}
+          </div>
         ))}
-      </Table>
+      </div>
     </div>
   );
 }

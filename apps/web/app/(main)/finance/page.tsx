@@ -1,40 +1,85 @@
 "use client";
 
 import { useState } from "react";
-
-const data = [
-  { id: 1, type: "Invoice", amount: "₹5000", status: "Paid" },
-  { id: 2, type: "Expense", amount: "₹2000", status: "Pending" },
-];
+import { useFinanceStore } from "@/lib/store";
+import Modal from "@/components/ui/modal";
+import { Transaction } from "@/types/transaction";
 
 export default function FinancePage() {
-  const [search, setSearch] = useState("");
+  const { transactions, addTransaction, deleteTransaction, updateTransaction } =
+    useFinanceStore();
 
-  const filtered = data.filter((d) =>
-    d.type.toLowerCase().includes(search.toLowerCase())
-  );
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"All" | "Paid" | "Pending">("All");
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [editTx, setEditTx] = useState<Transaction | null>(null);
+
+  const [form, setForm] = useState({
+    type: "",
+    amount: "",
+    status: "Pending" as "Paid" | "Pending",
+  });
+
+  const filtered = transactions.filter((t) => {
+    const matchSearch = t.type.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "All" || t.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const handleSubmit = () => {
+    if (editTx) {
+      updateTransaction({ ...editTx, ...form });
+    } else {
+      addTransaction({
+        id: Date.now().toString(),
+        ...form,
+      });
+    }
+
+    setForm({ type: "", amount: "", status: "Pending" });
+    setEditTx(null);
+    setIsOpen(false);
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Finance</h1>
 
-      <div className="flex gap-4">
+      {/* SEARCH + FILTER + BUTTON */}
+      <div className="flex gap-4 items-center">
         <input
-          placeholder="Search transaction..."
+          placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border p-2 rounded"
         />
 
-        <button className="bg-blue-500 px-4 py-2 text-white rounded">
+        <select
+          value={filter}
+          onChange={(e) =>
+            setFilter(e.target.value as "All" | "Paid" | "Pending")
+          }
+          className="border p-2 rounded"
+        >
+          <option>All</option>
+          <option>Paid</option>
+          <option>Pending</option>
+        </select>
+
+        <button
+          onClick={() => setIsOpen(true)}
+          className="bg-blue-500 px-4 py-2 text-white rounded"
+        >
           Add Transaction
         </button>
       </div>
 
+      {/* TABLE */}
       <table className="w-full border">
         <thead>
           <tr className="bg-gray-200 text-black">
-            <th>Type</th>
+            <th className="p-2">Type</th>
             <th>Amount</th>
             <th>Status</th>
             <th>Actions</th>
@@ -42,19 +87,82 @@ export default function FinancePage() {
         </thead>
 
         <tbody>
-          {filtered.map((item) => (
-            <tr key={item.id} className="border-t">
-              <td>{item.type}</td>
-              <td>{item.amount}</td>
-              <td>{item.status}</td>
+          {filtered.map((tx) => (
+            <tr key={tx.id} className="border-t">
+              <td className="p-2">{tx.type}</td>
+              <td>{tx.amount}</td>
+              <td>{tx.status}</td>
               <td className="space-x-2">
-                <button className="text-blue-500">Edit</button>
-                <button className="text-red-500">Delete</button>
+                <button
+                  onClick={() => {
+                    setEditTx(tx);
+                    setForm({
+                      type: tx.type,
+                      amount: tx.amount,
+                      status: tx.status,
+                    });
+                    setIsOpen(true);
+                  }}
+                  className="text-blue-500"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteTransaction(tx.id)}
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* MODAL */}
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <h2 className="mb-4 font-semibold">
+          {editTx ? "Edit Transaction" : "Add Transaction"}
+        </h2>
+
+        <div className="space-y-3">
+          <input
+            placeholder="Type"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            className="w-full border p-2"
+          />
+
+          <input
+            placeholder="Amount"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            className="w-full border p-2"
+          />
+
+          <select
+            value={form.status}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                status: e.target.value as "Paid" | "Pending",
+              })
+            }
+            className="w-full border p-2"
+          >
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+          </select>
+
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+          >
+            Save
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
