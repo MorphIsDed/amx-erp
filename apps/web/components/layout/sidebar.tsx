@@ -1,21 +1,20 @@
 "use client";
 
-import { Home, Users, BarChart3, Package, Settings } from "lucide-react";
-import { ReactNode } from "react";
+import Link from "next/link";
+import { Home, Users, BarChart3, Package, Settings, Briefcase } from "lucide-react";
 
 export default function Sidebar() {
   return (
-    <div className="w-64 h-screen bg-white/5 backdrop-blur-xl border-r border-white/10 p-5 flex flex-col">
-      <h1 className="text-lg font-semibold mb-8 tracking-wide text-gray-200">
-        AMDOX ERP
-      </h1>
+    <div className="w-64 h-screen bg-gray-900 text-white p-4 flex flex-col">
+      <h1 className="text-xl font-bold mb-6">AMX ERP</h1>
 
       <nav className="flex flex-col gap-2">
-        <NavItem active icon={<Home size={18} />} label="Dashboard" />
-        <NavItem icon={<Users size={18} />} label="HR" />
-        <NavItem icon={<Package size={18} />} label="Supply Chain" />
-        <NavItem icon={<BarChart3 size={18} />} label="Analytics" />
-        <NavItem icon={<Settings size={18} />} label="Settings" />
+        <NavItem icon={<Home size={18} />} label="Dashboard" href="/dashboard" />
+        <NavItem icon={<Users size={18} />} label="HR" href="/hr" />
+        <NavItem icon={<Package size={18} />} label="Supply Chain" href="/supply-chain" />
+        <NavItem icon={<BarChart3 size={18} />} label="Analytics" href="/analytics" />
+        <NavItem icon={<Briefcase size={18} />} label="Projects" href="/projects" />
+        <NavItem icon={<Settings size={18} />} label="Settings" href="/settings" />
       </nav>
     </div>
   );
@@ -24,21 +23,19 @@ export default function Sidebar() {
 function NavItem({
   icon,
   label,
-  active,
+  href,
 }: {
-  icon: ReactNode;
+  icon: React.ReactNode;
   label: string;
-  active?: boolean;
+  href: string;
 }) {
   return (
-    <div
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all
-      ${active
-        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-        : "text-gray-400 hover:bg-white/5 hover:text-white"}`}
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition"
     >
       {icon}
-      <span className="text-sm">{label}</span>
-    </div>
+      <span>{label}</span>
+    </Link>
   );
 }
