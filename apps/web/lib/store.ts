@@ -81,10 +81,19 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 interface ProjectState {
   tasks: Task[];
   addTask: (t: Task) => void;
+  updateTask: (t: Task) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
   tasks: [],
+
   addTask: (t) =>
     set((state) => ({ tasks: [...state.tasks, t] })),
+
+  updateTask: (t) =>
+    set((state) => ({
+      tasks: state.tasks.map((x) =>
+        x.id === t.id ? t : x
+      ),
+    })),
 }));

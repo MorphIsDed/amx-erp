@@ -1,17 +1,19 @@
-import { ReactNode } from "react";
-import Sidebar from "../../components/layout/sidebar";
-import Topbar from "../../components/layout/topbar";
+"use client";
 
-export default function MainLayout({ children }: { children: ReactNode }) {
+import Sidebar from "@/components/layout/sidebar";
+
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex h-screen bg-gradient-to-br from-[#0b0f19] via-[#0f172a] to-[#020617] text-white antialiased">
+    <div className="flex bg-[#0b0f19] text-white min-h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
+
+      <main className="flex-1 p-6 overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }
