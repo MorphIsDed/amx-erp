@@ -24,9 +24,11 @@ export default function Sidebar({
         duration: 0.2,
       }}
     >
-      <div className={`w-64 h-screen bg-card border-r border-border p-5 flex flex-col ${className ?? ""}`}>
+      <div
+        className={`w-64 max-w-[85vw] h-[100dvh] bg-card border-r border-border p-5 flex flex-col ${className ?? ""}`}
+      >
         <h1 className="text-lg font-semibold mb-8">AMX ERP</h1>
-        <nav className="flex flex-col gap-2">
+        <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1">
           <NavItem icon={<Home size={18} />} label="Dashboard" href="/dashboard" onNavigate={onNavigate} />
           <NavItem icon={<Users size={18} />} label="HR" href="/hr" onNavigate={onNavigate} />
           <NavItem icon={<Package size={18} />} label="Supply Chain" href="/supply-chain" onNavigate={onNavigate} />

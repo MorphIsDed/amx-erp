@@ -8,7 +8,7 @@ export default function Loading() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.15 }}
-      className="space-y-6"
+      className="space-y-6 w-full max-w-6xl mx-auto"
     >
       <div className="h-8 w-44 bg-border rounded" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -20,4 +20,3 @@ export default function Loading() {
     </motion.div>
   );
 }
-

@@ -30,7 +30,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-surface border border-border rounded-lg shadow-md w-full max-w-md p-6 pointer-events-auto"
+              className="bg-surface border border-border rounded-lg shadow-md w-full max-w-md p-4 sm:p-6 pointer-events-auto"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-text-main">{title}</h2>
@@ -41,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
                   ✕
                 </Button>
               </div>
-              <div>{children}</div>
+              <div className="max-h-[70dvh] overflow-y-auto pr-1">{children}</div>
             </motion.div>
           </div>
         </>

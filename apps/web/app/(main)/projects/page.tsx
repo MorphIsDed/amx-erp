@@ -16,7 +16,7 @@ export default function ProjectsPage() {
         duration: 0.2,
       }}
     >
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold">Projects</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {["Todo", "In Progress", "Done"].map((col) => (

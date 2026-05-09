@@ -15,7 +15,7 @@ export default function SettingsPage() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-8 max-w-5xl"
+      className="space-y-8 w-full max-w-5xl mx-auto"
     >
       {/* PAGE HEADER */}
       <div>
@@ -25,7 +25,7 @@ export default function SettingsPage() {
         </p>
       </div>
       {/* TAB NAVIGATION */}
-      <div className="flex gap-6 border-b border-border">
+      <div className="flex gap-6 border-b border-border overflow-x-auto whitespace-nowrap">
         {(["general", "team", "security"] as const).map((t) => (
           <Button
             key={t}
@@ -67,9 +67,9 @@ export default function SettingsPage() {
                     <p className="text-sm text-text-muted mt-1">
                       Update your company name and contact information.
                     </p>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-6">
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-text-main">
                           Company Name
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                       Irreversible actions for your organization.
                     </p>
                   </CardHeader>
-                  <CardContent className="pt-6 flex items-center justify-between">
+                  <CardContent className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <p className="text-sm font-medium text-text-main">
                         Delete Organization
@@ -114,7 +114,7 @@ export default function SettingsPage() {
                         Permanently remove your organization and all related data.
                       </p>
                     </div>
-                    <Button variant="danger">Delete Organization</Button>
+                    <Button variant="danger" className="w-full sm:w-auto">Delete Organization</Button>
                   </CardContent>
                 </Card>
               </>
@@ -122,14 +122,14 @@ export default function SettingsPage() {
 
             {tab === "team" && (
               <Card>
-                <CardHeader className="border-b border-border pb-4 flex flex-row items-center justify-between space-y-0">
+                <CardHeader className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 space-y-0">
                   <div className="space-y-1.5">
                     <CardTitle className="text-base">Team Members</CardTitle>
                     <p className="text-sm text-text-muted mt-1">
                       Manage who has access to this workspace.
                     </p>
                   </div>
-                  <Button variant="primary" size="sm">Invite Member</Button>
+                  <Button variant="primary" size="sm" className="w-full sm:w-auto">Invite Member</Button>
                 </CardHeader>
                 
                 <div className="[&>div]:border-0 [&>div]:rounded-none [&>div]:bg-transparent">

@@ -10,7 +10,7 @@ export default function DashboardPage() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-8 max-w-5xl"
+      className="space-y-8 w-full max-w-5xl mx-auto"
     >
       {/* PAGE HEADER */}
       <div>

@@ -21,14 +21,14 @@ export default function HRPage() {
         duration: 0.2,
       }}
     >
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-6xl mx-auto">
           <div>
             <h1 className="text-2xl font-semibold">HR</h1>
             <p className="text-muted text-sm">
               Manage employees and attendance
             </p>
           </div>
-          <div className="flex gap-4 border-b border-border pb-2">
+          <div className="flex gap-4 border-b border-border pb-2 overflow-x-auto whitespace-nowrap">
             {["employees", "attendance", "leaves"].map((t) => (
               <Button
                 key={t}

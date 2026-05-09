@@ -16,8 +16,8 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body className="min-h-screen bg-card text-text-main flex items-center justify-center p-6">
-        <div className="w-full max-w-lg bg-surface border border-border rounded-xl p-6 space-y-3">
+      <body className="min-h-screen bg-card text-text-main flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-lg bg-surface border border-border rounded-xl p-4 sm:p-6 space-y-3">
           <h1 className="text-lg font-semibold">Something went wrong</h1>
           <p className="text-sm text-text-muted">
             An unexpected error occurred. Try again, or refresh the page.
@@ -25,7 +25,7 @@ export default function GlobalError({
           {error.digest && (
             <p className="text-xs text-text-muted">Ref: {error.digest}</p>
           )}
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button onClick={reset} variant="primary">
               Try again
             </Button>
