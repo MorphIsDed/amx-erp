@@ -26,7 +26,7 @@ export function StatCard({ title, value, icon, trend, className }: StatCardProps
         <div className="text-2xl font-bold text-text-main">{value}</div>
         {trend && (
           <p className="text-xs text-text-muted mt-1">
-            <span className={cn("font-medium", trend.value >= 0 ? "text-green-500" : "text-danger")}>
+            <span className={cn("font-medium", trend.value >= 0 ? "text-success" : "text-danger")}>
               {trend.value >= 0 ? "+" : ""}{trend.value}%
             </span>{" "}
             {trend.label}
@@ -36,3 +36,5 @@ export function StatCard({ title, value, icon, trend, className }: StatCardProps
     </Card>
   );
 }
+
+

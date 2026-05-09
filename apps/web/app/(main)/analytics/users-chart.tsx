@@ -1,13 +1,6 @@
 "use client";
-
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { motion } from "framer-motion";
 
 const data = [
   { month: "Jan", users: 200 },
@@ -18,13 +11,28 @@ const data = [
 
 export default function UsersChart() {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="users" fill="#10b981" />
-      </BarChart>
-    </ResponsiveContainer>
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.2,
+      }}
+    >
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={data}>
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="users" fill="var(--success)" />
+        </BarChart>
+      </ResponsiveContainer>
+    </motion.div>
   );
 }
+

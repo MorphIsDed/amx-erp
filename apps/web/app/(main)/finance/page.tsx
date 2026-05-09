@@ -1,11 +1,12 @@
 "use client";
-
 import { useState } from "react";
 import { useFinanceStore } from "@/lib/store";
-import Modal from "@/components/ui/modal";
-import Card from "@/components/ui/stat-card";
+import { Modal } from "@/components/ui/modal";
+import { StatCard as Card } from "@/components/ui/stat-card";
 import { Transaction } from "@/types/transaction";
 import { motion } from "framer-motion";
+import Button from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type FinanceTransaction = Transaction & { category: string };
 
@@ -27,6 +28,7 @@ export default function FinancePage() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [editTx, setEditTx] = useState<FinanceTransaction | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     type: "",
@@ -52,18 +54,35 @@ export default function FinancePage() {
   const balance = revenue - expenses;
 
   const handleSubmit = () => {
+    const type = form.type.trim();
+    const category = form.category.trim();
+    const amountNumber = Number(form.amount);
+
+    if (!type || !category) {
+      setFormError("Type and category are required.");
+      return;
+    }
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      setFormError("Enter a valid amount greater than 0.");
+      return;
+    }
+
     if (editTx) {
-      updateTransaction({ ...editTx, ...form });
+      updateTransaction({ ...editTx, ...form, type, category, amount: String(amountNumber) });
     } else {
       addTransaction({
         id: Date.now().toString(),
         ...form,
+        type,
+        category,
+        amount: String(amountNumber),
       } as FinanceTransaction);
     }
 
     setForm({ type: "", category: "", amount: "", status: "Pending" });
     setEditTx(null);
     setIsOpen(false);
+    setFormError(null);
   };
 
   return (
@@ -75,25 +94,23 @@ export default function FinancePage() {
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-semibold">Finance</h1>
-        <p className="text-sm text-[var(--muted)]">
+        <p className="text-sm text-muted">
           Manage transactions and financial reports
         </p>
       </div>
-
       {/* KPI */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card label="Revenue" value={`₹${revenue}`} />
-        <Card label="Expenses" value={`₹${expenses}`} />
-        <Card label="Balance" value={`₹${balance}`} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card title="Revenue" value={`₹${revenue}`} />
+        <Card title="Expenses" value={`₹${expenses}`} />
+        <Card title="Balance" value={`₹${balance}`} />
       </div>
-
       {/* FILTER BAR */}
-      <div className="flex gap-4 items-center">
-        <input
+      <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+        <Input
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#0f172a] border border-[var(--border)] px-3 py-2 rounded-lg"
+          className="bg-card border border-border px-3 py-2 rounded-lg sm:max-w-xs"
         />
 
         <select
@@ -101,25 +118,24 @@ export default function FinancePage() {
           onChange={(e) =>
             setStatusFilter(e.target.value as "All" | "Paid" | "Pending")
           }
-          className="bg-[#0f172a] border border-[var(--border)] px-3 py-2 rounded-lg"
+          className="bg-card border border-border px-3 py-2 rounded-lg sm:w-40"
         >
           <option>All</option>
           <option>Paid</option>
           <option>Pending</option>
         </select>
 
-        <button
+        <Button
           onClick={() => setIsOpen(true)}
-          className="ml-auto bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white"
+          className="sm:ml-auto bg-card hover:bg-card px-4 py-2 rounded-lg text-text-main w-full sm:w-auto"
         >
           Add Transaction
-        </button>
+        </Button>
       </div>
-
       {/* TABLE */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-[#0f172a] text-gray-300">
+      <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
+          <thead className="bg-surface text-muted">
             <tr>
               <th className="p-3 text-left">Type</th>
               <th>Category</th>
@@ -133,7 +149,7 @@ export default function FinancePage() {
             {filtered.map((tx) => (
               <tr
                 key={tx.id}
-                className="border-t border-[var(--border)] hover:bg-white/5 transition"
+                className="border-t border-border hover:bg-card transition"
               >
                 <td className="p-3">{tx.type}</td>
                 <td>{tx.category}</td>
@@ -141,7 +157,7 @@ export default function FinancePage() {
                 <td>{tx.status}</td>
 
                 <td className="text-right pr-4 space-x-3">
-                  <button
+                  <Button
                     onClick={() => {
                       setEditTx(tx);
                       setForm({
@@ -152,24 +168,24 @@ export default function FinancePage() {
                       });
                       setIsOpen(true);
                     }}
-                    className="text-blue-400"
+                    className="text-muted"
                   >
                     Edit
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     onClick={() => deleteTransaction(tx.id)}
-                    className="text-red-400"
+                    className="text-danger"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
 
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center p-4 text-gray-400">
+                <td colSpan={5} className="text-center p-4 text-muted">
                   No transactions found
                 </td>
               </tr>
@@ -177,46 +193,51 @@ export default function FinancePage() {
           </tbody>
         </table>
       </div>
-
       {/* MODAL */}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-        <h2 className="mb-4 font-semibold">
-          {editTx ? "Edit Transaction" : "Add Transaction"}
-        </h2>
-
+      <Modal
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+          setFormError(null);
+        }}
+        title={editTx ? "Edit Transaction" : "Add Transaction"}
+      >
         <div className="space-y-3">
-          <input
+          {formError && <p className="text-sm text-danger">{formError}</p>}
+          <Input
             placeholder="Type"
             value={form.type}
             onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="w-full bg-[#0f172a] border border-[var(--border)] p-2 rounded"
+            className="w-full bg-card border border-border p-2 rounded"
           />
 
           <select
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className="w-full bg-[#0f172a] border border-[var(--border)] p-2 rounded"
+            className="w-full bg-card border border-border p-2 rounded"
           >
             <option value="">Category</option>
             <option value="Income">Income</option>
             <option value="Expense">Expense</option>
           </select>
 
-          <input
+          <Input
             placeholder="Amount"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="w-full bg-[#0f172a] border border-[var(--border)] p-2 rounded"
+            className="w-full bg-card border border-border p-2 rounded"
           />
 
-          <button
+          <Button
             onClick={handleSubmit}
-            className="bg-blue-500 w-full py-2 rounded text-white"
+            className="bg-card w-full py-2 rounded text-text-main"
+            disabled={!form.type.trim() || !form.category.trim() || !form.amount.trim()}
           >
             Save
-          </button>
+          </Button>
         </div>
       </Modal>
     </motion.div>
   );
 }
+

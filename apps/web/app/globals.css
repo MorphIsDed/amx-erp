@@ -1,15 +1,28 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
 
 @theme {
-  --color-background: #0B0F19;
-  --color-card: #111827;
-  --color-border-subtle: #1F2937;
-  --color-text-main: #E5E7EB;
-  --color-text-muted: #9CA3AF;
-  --color-accent: #4F46E5;
-  --color-accent-hover: #4338CA;
-  --color-danger: #EF4444;
-  --color-danger-hover: #DC2626;
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-text-main: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 }
 
 @layer base {

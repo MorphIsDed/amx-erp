@@ -1,4 +1,7 @@
+"use client";
+
 import { ReactNode } from "react";
+import { motion } from "framer-motion";
 
 export default function Section({
   title,
@@ -8,9 +11,24 @@ export default function Section({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-gray-300">{title}</h2>
-      {children}
-    </div>
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.2,
+      }}
+    >
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-muted">{title}</h2>
+        {children}
+      </div>
+    </motion.div>
   );
 }
+

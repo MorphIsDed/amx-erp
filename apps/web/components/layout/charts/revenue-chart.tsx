@@ -1,13 +1,6 @@
 "use client";
-
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { motion } from "framer-motion";
 
 const data = [
   { name: "Jan", value: 400 },
@@ -18,13 +11,28 @@ const data = [
 
 export default function RevenueChart() {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
-        <XAxis dataKey="name" stroke="#888" />
-        <YAxis stroke="#888" />
-        <Tooltip />
-        <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.2,
+      }}
+    >
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <XAxis dataKey="name" stroke="var(--text-muted)" />
+          <YAxis stroke="var(--text-muted)" />
+          <Tooltip />
+          <Line type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={2} />
+        </LineChart>
+      </ResponsiveContainer>
+    </motion.div>
   );
 }
+
