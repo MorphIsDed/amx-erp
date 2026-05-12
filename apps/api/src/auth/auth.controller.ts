@@ -1,8 +1,23 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import type { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('auth')
@@ -31,7 +46,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('profile')
   @ApiOperation({ summary: 'Get current user profile' })
-  getProfile(@Request() req: any) {
-    return req.user;
+  getProfile(@Request() req: ExpressRequest & { user?: unknown }) {
+    return req.user ?? null;
   }
 }
