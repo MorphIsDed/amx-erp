@@ -1,39 +1,45 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { PartialType } from '@nestjs/swagger';
-import { EmployeeRole, EmployeeStatus } from '@prisma/client';
+import { PartialType, ApiProperty } from '@nestjs/swagger';
+import { EmployeeStatus } from '@repo/db';
 
 export class CreateEmployeeDto {
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   employeeId: string;
 
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   firstName: string;
 
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   lastName: string;
 
+  @ApiProperty()
   @IsEmail()
-  @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @IsEnum(EmployeeRole)
-  @IsOptional()
-  role?: EmployeeRole;
-
+  @ApiProperty({ enum: EmployeeStatus })
   @IsEnum(EmployeeStatus)
   @IsOptional()
   status?: EmployeeStatus;
 
+  @ApiProperty()
+  @IsNotEmpty()
+  hireDate: Date;
+
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  departmentId?: string;
+  @IsNotEmpty()
+  departmentId: string;
 }
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {}
