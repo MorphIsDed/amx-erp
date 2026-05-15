@@ -1,41 +1,129 @@
 :root {
-  /* COLORS - Human/Enterprise Palette */
-  --bg: #0a0c10;
-  --surface: #11141b;
-  --card: #181c25;
-  --border: #262c3a;
+  /* ═══════════════════════════════════════════════
+     DEPTH SYSTEM — 6 elevation levels
+     Each level adds ~3-4% luminance for architectural depth
+     ═══════════════════════════════════════════════ */
+  --bg:         #06080d;
+  --surface-0:  #090c14;
+  --surface:    #0d1117;
+  --card:       #131820;
+  --card-hover: #181e28;
+  --elevated:   #1e2530;
+  --border:     #1e293b;
+  --border-light: #334155;
 
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
+  /* ═══════════════════════════════════════════════
+     TEXT SYSTEM
+     ═══════════════════════════════════════════════ */
+  --text:       #f1f5f9;
+  --text-muted: #7c8ca4;
+  --text-faint: #4a5568;
 
-  --primary: #10b981; /* Emerald - Trustworthy & Human */
-  --primary-hover: #059669;
-  
-  --accent: #8b5cf6; /* Subtle Violet for highlights */
+  /* ═══════════════════════════════════════════════
+     CHROMATIC ACCENT SYSTEM
+     Primary: Iridescent Cyan-Emerald
+     Secondary: Electric Violet
+     Tertiary: Plasma Rose
+     ═══════════════════════════════════════════════ */
+  --primary:        #34d399;
+  --primary-vivid:  #10b981;
+  --primary-hover:  #059669;
+  --primary-muted:  rgba(52, 211, 153, 0.15);
+  --primary-glow:   rgba(52, 211, 153, 0.4);
 
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --danger-hover: #dc2626;
+  --accent:         #a78bfa;
+  --accent-vivid:   #8b5cf6;
+  --accent-muted:   rgba(167, 139, 250, 0.15);
+  --accent-glow:    rgba(139, 92, 246, 0.4);
 
-  /* GLASSMORPISM */
-  --glass-bg: rgba(24, 28, 37, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --rose:           #fb7185;
+  --rose-vivid:     #f43f5e;
+  --rose-muted:     rgba(251, 113, 133, 0.15);
 
-  /* RADIUS & SHADOW */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --cyan:           #22d3ee;
+  --cyan-muted:     rgba(34, 211, 238, 0.15);
 
-  /* SPACING (8pt system) */
+  /* ═══════════════════════════════════════════════
+     SEMANTIC COLORS
+     ═══════════════════════════════════════════════ */
+  --success:      #34d399;
+  --warning:      #fbbf24;
+  --danger:       #f87171;
+  --danger-hover: #ef4444;
+  --info:         #60a5fa;
+
+  /* ═══════════════════════════════════════════════
+     GLASS MORPHISM — Multi-layer depth system
+     ═══════════════════════════════════════════════ */
+  --glass-bg:         rgba(13, 17, 23, 0.6);
+  --glass-bg-heavy:   rgba(13, 17, 23, 0.85);
+  --glass-border:     rgba(255, 255, 255, 0.06);
+  --glass-border-lit: rgba(255, 255, 255, 0.12);
+
+  /* ═══════════════════════════════════════════════
+     GLOW SYSTEM — 4 intensities
+     ═══════════════════════════════════════════════ */
+  --glow-whisper:  0 0 20px -5px;
+  --glow-soft:     0 0 30px -5px;
+  --glow-medium:   0 0 50px -10px;
+  --glow-blaze:    0 4px 80px -15px;
+
+  /* ═══════════════════════════════════════════════
+     DEPTH BLUR SCALE
+     ═══════════════════════════════════════════════ */
+  --blur-xs:  4px;
+  --blur-sm:  8px;
+  --blur-md:  16px;
+  --blur-lg:  24px;
+  --blur-xl:  40px;
+
+  /* ═══════════════════════════════════════════════
+     RADIUS & SHADOW
+     ═══════════════════════════════════════════════ */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-2xl: 24px;
+
+  --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md:      0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg:      0 8px 25px -5px rgba(0, 0, 0, 0.5);
+  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
+  --shadow-float:   0 20px 60px -15px rgba(0, 0, 0, 0.7);
+
+  /* ═══════════════════════════════════════════════
+     SPACING (8pt system)
+     ═══════════════════════════════════════════════ */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-8: 32px;
 
-  /* TRANSITIONS */
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* ═══════════════════════════════════════════════
+     SPRING EASING CURVES
+     ═══════════════════════════════════════════════ */
+  --ease-out-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:      cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce:      cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-smooth:      cubic-bezier(0.4, 0, 0.2, 1);
+
+  --transition-fast:  0.15s var(--ease-out-expo);
+  --transition:       0.3s var(--ease-out-expo);
+  --transition-slow:  0.5s var(--ease-out-expo);
+  --transition-spring: 0.4s var(--ease-spring);
+
+  /* ═══════════════════════════════════════════════
+     GRADIENT SYSTEMS
+     ═══════════════════════════════════════════════ */
+  --gradient-primary:  linear-gradient(135deg, #34d399, #22d3ee);
+  --gradient-accent:   linear-gradient(135deg, #a78bfa, #f472b6);
+  --gradient-warm:     linear-gradient(135deg, #fbbf24, #f97316);
+  --gradient-aurora:   linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(139, 92, 246, 0.06), rgba(34, 211, 238, 0.04));
+  --gradient-mesh:     radial-gradient(ellipse at 20% 50%, rgba(52, 211, 153, 0.06) 0%, transparent 50%),
+                       radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+                       radial-gradient(ellipse at 60% 80%, rgba(34, 211, 238, 0.04) 0%, transparent 50%);
 }

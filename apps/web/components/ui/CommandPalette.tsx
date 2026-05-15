@@ -2,18 +2,21 @@
 
 import * as React from "react";
 import { Command } from "cmdk";
-import { 
-  Search, 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  Truck, 
-  Settings, 
+import {
+  Search,
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Truck,
+  Settings,
   Briefcase,
-  Plus
+  Plus,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
@@ -37,85 +40,155 @@ export function CommandPalette() {
   }, []);
 
   return (
-    <>
-      <div 
-        className={cn(
-          "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300",
-          open ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={() => setOpen(false)}
-      />
-      
-      <div className={cn(
-        "fixed left-1/2 top-[20%] z-50 w-full max-w-[640px] -translate-x-1/2 transition-all duration-300",
-        open ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
-      )}>
-        <Command className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center border-b border-border px-4 py-3">
-            <Search className="mr-3 h-5 w-5 text-text-muted" />
-            <Command.Input 
-              placeholder="Search or jump to..." 
-              className="flex-1 bg-transparent text-text-main placeholder:text-text-muted outline-none"
-            />
-            <div className="rounded bg-surface border border-border px-2 py-0.5 text-[10px] text-text-muted">
-              ESC
-            </div>
-          </div>
-          
-          <Command.List className="max-h-[400px] overflow-y-auto p-2 scrollbar-hide">
-            <Command.Empty className="px-4 py-8 text-center text-sm text-text-muted">
-              No results found.
-            </Command.Empty>
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
 
-            <Command.Group heading="Quick Actions" className="px-2 py-2 text-[11px] font-medium text-text-muted uppercase tracking-wider">
-              <CommandItem onSelect={() => runCommand(() => router.push("/hr/employees/new"))}>
-                <Plus className="mr-3 h-4 w-4" />
-                <span>New Employee</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/finance/invoices/new"))}>
-                <Plus className="mr-3 h-4 w-4" />
-                <span>Create Invoice</span>
-              </CommandItem>
-            </Command.Group>
+          {/* Panel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed left-1/2 top-[18%] z-50 w-full max-w-[580px] -translate-x-1/2"
+          >
+            <Command className="overflow-hidden rounded-2xl border border-border/40 bg-card/95 backdrop-blur-xl shadow-float">
+              {/* Search input area */}
+              <div className="flex items-center border-b border-border/30 px-4 py-3.5 gap-3">
+                <div className="p-1 rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <Command.Input
+                  placeholder="Search or jump to..."
+                  className="flex-1 bg-transparent text-text-main placeholder:text-text-faint outline-none text-sm"
+                />
+                <div className="rounded-lg bg-surface border border-border/50 px-2 py-1 text-[10px] font-mono text-text-faint">
+                  ESC
+                </div>
+              </div>
 
-            <Command.Group heading="Navigation" className="mt-2 px-2 py-2 text-[11px] font-medium text-text-muted uppercase tracking-wider">
-              <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
-                <LayoutDashboard className="mr-3 h-4 w-4" />
-                <span>Dashboard</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/hr"))}>
-                <Users className="mr-3 h-4 w-4" />
-                <span>HR & Payroll</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/finance"))}>
-                <CreditCard className="mr-3 h-4 w-4" />
-                <span>Finance</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/supply-chain"))}>
-                <Truck className="mr-3 h-4 w-4" />
-                <span>Supply Chain</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/projects"))}>
-                <Briefcase className="mr-3 h-4 w-4" />
-                <span>Projects</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push("/settings"))}>
-                <Settings className="mr-3 h-4 w-4" />
-                <span>Settings</span>
-              </CommandItem>
-            </Command.Group>
-          </Command.List>
-        </Command>
-      </div>
-    </>
+              {/* Results */}
+              <Command.List className="max-h-[380px] overflow-y-auto p-2 scrollbar-hide">
+                <Command.Empty className="px-4 py-10 text-center text-sm text-text-muted">
+                  No results found.
+                </Command.Empty>
+
+                <Command.Group
+                  heading="Quick Actions"
+                  className="px-2 py-2 text-[10px] font-semibold text-text-faint uppercase tracking-widest"
+                >
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/hr"))
+                    }
+                  >
+                    <Plus className="mr-3 h-4 w-4 text-primary" />
+                    <span>New Employee</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() =>
+                        router.push("/finance/invoices")
+                      )
+                    }
+                  >
+                    <Plus className="mr-3 h-4 w-4 text-primary" />
+                    <span>Create Invoice</span>
+                  </CommandItem>
+                </Command.Group>
+
+                <Command.Group
+                  heading="Navigation"
+                  className="mt-1 px-2 py-2 text-[10px] font-semibold text-text-faint uppercase tracking-widest"
+                >
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/dashboard"))
+                    }
+                  >
+                    <LayoutDashboard className="mr-3 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/hr"))
+                    }
+                  >
+                    <Users className="mr-3 h-4 w-4" />
+                    <span>HR & Payroll</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/finance"))
+                    }
+                  >
+                    <CreditCard className="mr-3 h-4 w-4" />
+                    <span>Finance</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() =>
+                        router.push("/supply-chain")
+                      )
+                    }
+                  >
+                    <Truck className="mr-3 h-4 w-4" />
+                    <span>Supply Chain</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/analytics"))
+                    }
+                  >
+                    <BarChart3 className="mr-3 h-4 w-4" />
+                    <span>Analytics</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/projects"))
+                    }
+                  >
+                    <Briefcase className="mr-3 h-4 w-4" />
+                    <span>Projects</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/settings"))
+                    }
+                  >
+                    <Settings className="mr-3 h-4 w-4" />
+                    <span>Settings</span>
+                  </CommandItem>
+                </Command.Group>
+              </Command.List>
+            </Command>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
-function CommandItem({ children, onSelect }: { children: React.ReactNode; onSelect: () => void }) {
+function CommandItem({
+  children,
+  onSelect,
+}: {
+  children: React.ReactNode;
+  onSelect: () => void;
+}) {
   return (
-    <Command.Item 
+    <Command.Item
       onSelect={onSelect}
-      className="flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-surface aria-selected:bg-surface"
+      className="flex cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm text-text-muted transition-all duration-200 hover:bg-primary/[0.06] hover:text-text-main aria-selected:bg-primary/[0.06] aria-selected:text-text-main group"
     >
       {children}
     </Command.Item>

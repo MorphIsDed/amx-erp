@@ -1,22 +1,23 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 export default function Loading() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.15 }}
-      className="space-y-6 w-full max-w-6xl mx-auto"
-    >
-      <div className="h-8 w-44 bg-border rounded" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="h-24 bg-surface border border-border rounded-xl" />
-        <div className="h-24 bg-surface border border-border rounded-xl" />
-        <div className="h-24 bg-surface border border-border rounded-xl" />
+    <div className="space-y-6 w-full max-w-7xl mx-auto animate-fade-in-up">
+      {/* Title skeleton */}
+      <div className="h-8 w-56 shimmer rounded-lg" />
+
+      {/* Stats grid skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-28 shimmer rounded-2xl border border-border/20" />
+        ))}
       </div>
-      <div className="h-64 bg-surface border border-border rounded-xl" />
-    </motion.div>
+
+      {/* Content skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-[400px] shimmer rounded-2xl border border-border/20" />
+        <div className="h-[400px] shimmer rounded-2xl border border-border/20" />
+      </div>
+    </div>
   );
 }

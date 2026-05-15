@@ -1,17 +1,21 @@
 "use client";
 import Button from "@/components/ui/button";
-import { Menu, Search, Command } from "lucide-react";
+import { Menu, Search, Command, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { NotificationHub } from "./notification-hub";
 
-export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
+export default function Topbar({
+  onMenuClick,
+}: {
+  onMenuClick?: () => void;
+}) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="sticky top-0 z-40 h-16 flex items-center justify-between px-6 border-b border-border bg-surface/80 backdrop-blur-xl"
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="sticky top-0 z-40 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-surface-0/60 backdrop-blur-xl"
     >
       <div className="flex items-center gap-4">
         {onMenuClick && (
@@ -24,30 +28,38 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             <Menu className="w-5 h-5" />
           </Button>
         )}
-        
-        {/* COMMAND PALETTE TRIGGER HINT */}
-        <button className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-text-muted hover:text-text-main hover:border-primary/50 transition-all text-xs">
+
+        {/* Search trigger */}
+        <button className="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/30 bg-card/40 text-text-faint hover:text-text-muted hover:border-border/60 hover:bg-card/70 transition-all duration-200 text-xs group">
           <Search className="w-3.5 h-3.5" />
-          <span>Quick search...</span>
-          <div className="flex items-center gap-1 ml-4 opacity-50">
-            <Command className="w-3 h-3" />
-            <span>K</span>
+          <span className="text-text-faint group-hover:text-text-muted transition-colors">
+            Quick search...
+          </span>
+          <div className="flex items-center gap-0.5 ml-6 px-1.5 py-0.5 rounded bg-surface border border-border/30 text-[10px] font-mono text-text-faint">
+            <Command className="w-2.5 h-2.5" />K
           </div>
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <NotificationHub />
-        
-        <div className="h-8 w-px bg-border mx-2" />
-        
+
+        <div className="h-6 w-px bg-border/20 mx-1" />
+
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-semibold text-text-main">Admin User</p>
-            <p className="text-[10px] text-primary">System Administrator</p>
+            <p className="text-xs font-semibold text-text-main leading-tight">
+              Admin User
+            </p>
+            <p className="text-[10px] text-primary/80">
+              System Administrator
+            </p>
           </div>
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-500 font-bold text-xs">
-            AD
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-cyan/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
+              AD
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-surface-0" />
           </div>
         </div>
       </div>

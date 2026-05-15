@@ -1,174 +1,100 @@
 "use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { 
-  Package, 
-  Truck, 
-  Warehouse, 
-  AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
-  History,
-  Plus
-} from "lucide-react";
+import { Package, Truck, Warehouse, AlertTriangle, History, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
+const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } };
+
 export default function SupplyChainOverview() {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-7xl mx-auto">
+      <motion.div variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-main tracking-tight">Supply Chain & Inventory</h1>
-          <p className="text-text-muted mt-1">Real-time stock tracking and warehouse operations.</p>
+          <h1 className="text-3xl font-bold tracking-tight"><span className="text-gradient-primary">Supply Chain</span>{" "}<span className="text-text-main">& Inventory</span></h1>
+          <p className="text-text-muted mt-2 text-sm">Real-time stock tracking and warehouse operations.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href="/supply-chain/inventory">Inventory Master</Link>
-          </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
+          <Button variant="outline" asChild><Link href="/supply-chain/inventory">Inventory Master</Link></Button>
+          <Button><Plus className="w-4 h-4 mr-2" />Add Product</Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* KPI GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <InventoryStat 
-          title="Stock Valuation" 
-          value="₹14.2M" 
-          change="+8.5%" 
-          trend="up" 
-          icon={Package} 
-          color="text-primary"
-        />
-        <InventoryStat 
-          title="Active SKUs" 
-          value="842" 
-          change="+12" 
-          trend="up" 
-          icon={Truck} 
-          color="text-blue-500"
-        />
-        <InventoryStat 
-          title="Total Warehouses" 
-          value="4" 
-          change="Optimal" 
-          trend="neutral" 
-          icon={Warehouse} 
-          color="text-emerald-500"
-        />
-        <InventoryStat 
-          title="Low Stock Items" 
-          value="18" 
-          change="-2" 
-          trend="down" 
-          icon={AlertTriangle} 
-          color="text-amber-500"
-        />
-      </div>
+      <motion.div variants={container} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <InventoryStat title="Stock Valuation" value="₹14.2M" change="+8.5%" trend="up" icon={Package} gradient="from-primary to-cyan" />
+        <InventoryStat title="Active SKUs" value="842" change="+12" trend="up" icon={Truck} gradient="from-info to-accent" />
+        <InventoryStat title="Total Warehouses" value="4" change="Optimal" trend="neutral" icon={Warehouse} gradient="from-success to-primary" />
+        <InventoryStat title="Low Stock Items" value="18" change="-2" trend="down" icon={AlertTriangle} gradient="from-warning to-rose" />
+      </motion.div>
 
-      {/* CHARTS / DETAILS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* STOCK DISTRIBUTION */}
+      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="glass" className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Warehouse Distribution</CardTitle>
-            <p className="text-xs text-text-muted mt-1">Stock levels across all physical locations</p>
-          </CardHeader>
-          <CardContent className="h-[350px] flex flex-col justify-center p-8 space-y-6">
-            <WarehouseProgress name="Main Hub - Mumbai" value={75} color="bg-primary" />
-            <WarehouseProgress name="North Depot - Delhi" value={45} color="bg-blue-500" />
-            <WarehouseProgress name="South Hub - Bengaluru" value={62} color="bg-emerald-500" />
-            <WarehouseProgress name="East Depot - Kolkata" value={28} color="bg-amber-500" />
+          <CardHeader><CardTitle>Warehouse Distribution</CardTitle><p className="text-xs text-text-faint mt-1">Stock levels across all physical locations</p></CardHeader>
+          <CardContent className="h-[350px] flex flex-col justify-center p-8 space-y-7">
+            <WarehouseProgress name="Main Hub — Mumbai" value={75} color="from-primary to-cyan" glow="rgba(52,211,153,0.3)" />
+            <WarehouseProgress name="North Depot — Delhi" value={45} color="from-info to-accent" glow="rgba(96,165,250,0.3)" />
+            <WarehouseProgress name="South Hub — Bengaluru" value={62} color="from-success to-primary" glow="rgba(52,211,153,0.3)" />
+            <WarehouseProgress name="East Depot — Kolkata" value={28} color="from-warning to-rose" glow="rgba(251,191,36,0.3)" />
           </CardContent>
         </Card>
 
-        {/* RECENT MOVEMENTS */}
         <Card variant="default">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Ledger</CardTitle>
-            <History className="w-4 h-4 text-text-muted" />
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border/20">
+            <CardTitle>Recent Ledger</CardTitle><History className="w-4 h-4 text-text-faint" />
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5 pt-5">
             {[
               { type: "IN", item: "Logitech MX Master 3", qty: "+50", date: "2h ago", reason: "Goods Receipt" },
               { type: "OUT", item: "MacBook Pro M3", qty: "-5", date: "4h ago", reason: "Order #842" },
               { type: "TRANS", item: "Dell U2723QE", qty: "20", date: "Yesterday", reason: "Internal Transfer" },
               { type: "ADJ", item: "Keychron K2", qty: "-2", date: "Yesterday", reason: "Damaged Stock" },
             ].map((m, i) => (
-              <div key={i} className="flex items-center justify-between group">
+              <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.06, ease: [0.16, 1, 0.3, 1] }} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-8 h-8 rounded flex items-center justify-center text-[10px] font-bold",
-                    m.type === "IN" ? "bg-emerald-500/10 text-emerald-500" :
-                    m.type === "OUT" ? "bg-danger/10 text-danger" : "bg-surface text-text-muted"
-                  )}>
-                    {m.type}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-text-main leading-tight truncate max-w-[120px]">{m.item}</p>
-                    <p className="text-[10px] text-text-muted">{m.reason}</p>
-                  </div>
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold",
+                    m.type === "IN" ? "bg-success/10 text-success" : m.type === "OUT" ? "bg-danger/10 text-danger" : "bg-surface text-text-faint"
+                  )}>{m.type}</div>
+                  <div><p className="text-sm font-semibold text-text-main leading-tight truncate max-w-[120px]">{m.item}</p><p className="text-[10px] text-text-faint">{m.reason}</p></div>
                 </div>
                 <div className="text-right">
-                  <p className={cn(
-                    "text-xs font-bold",
-                    m.qty.startsWith("+") ? "text-emerald-500" : m.qty.startsWith("-") ? "text-danger" : "text-text-main"
-                  )}>{m.qty}</p>
-                  <p className="text-[10px] text-text-muted">{m.date}</p>
+                  <p className={cn("text-xs font-bold font-mono", m.qty.startsWith("+") ? "text-success" : m.qty.startsWith("-") ? "text-danger" : "text-text-main")}>{m.qty}</p>
+                  <p className="text-[10px] text-text-faint">{m.date}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-function InventoryStat({ title, value, change, trend, icon: Icon, color }: any) {
+function InventoryStat({ title, value, change, trend, icon: Icon, gradient }: any) {
   return (
-    <Card variant="default" className="group hover:border-primary/50 transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className={cn("p-2 rounded-lg bg-surface border border-border group-hover:border-primary/30", color)}>
-            <Icon className="w-5 h-5" />
+    <motion.div variants={item}>
+      <Card variant="default" className="group hover:-translate-y-0.5 transition-all duration-300 overflow-hidden relative">
+        <div className={cn("absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-30 group-hover:opacity-70 transition-opacity", gradient)} />
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="p-2.5 rounded-xl bg-surface/80 border border-border/30 group-hover:border-primary/20 transition-all duration-300"><Icon className="w-5 h-5 text-text-muted group-hover:text-primary transition-colors" /></div>
+            <div className={cn("flex items-center text-xs font-semibold px-2.5 py-1 rounded-full", trend === "up" ? "bg-success/10 text-success" : trend === "down" ? "bg-danger/10 text-danger" : "bg-surface text-text-faint")}>{change}</div>
           </div>
-          <div className={cn(
-            "flex items-center text-xs font-medium px-2 py-1 rounded-full",
-            trend === "up" ? "bg-emerald-500/10 text-emerald-500" : 
-            trend === "down" ? "bg-danger/10 text-danger" : "bg-surface text-text-muted"
-          )}>
-            {change}
-          </div>
-        </div>
-        <div className="mt-4">
-          <p className="text-sm font-medium text-text-muted">{title}</p>
-          <h2 className="text-2xl font-bold text-text-main mt-1">{value}</h2>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="mt-4"><p className="text-xs font-semibold text-text-muted uppercase tracking-wider">{title}</p><h2 className="text-2xl font-bold text-text-main mt-1 tracking-tight">{value}</h2></div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
-function WarehouseProgress({ name, value, color }: any) {
+function WarehouseProgress({ name, value, color, glow }: any) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs font-medium">
-        <span className="text-text-main">{name}</span>
-        <span className="text-text-muted">{value}% Capacity</span>
-      </div>
-      <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-        <motion.div 
-          initial={{ width: 0 }}
-          animate={{ width: `${value}%` }}
-          className={cn("h-full", color)}
-        />
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between text-xs font-medium"><span className="text-text-main">{name}</span><span className="text-text-faint font-mono">{value}%</span></div>
+      <div className="h-2 w-full bg-border/20 rounded-full overflow-hidden">
+        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }} className={cn("h-full rounded-full bg-gradient-to-r relative", color)} style={{ boxShadow: `0 0 12px -2px ${glow}` }} />
       </div>
     </div>
   );
