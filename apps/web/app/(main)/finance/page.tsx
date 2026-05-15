@@ -1,243 +1,187 @@
 "use client";
-import { useState } from "react";
-import { useFinanceStore } from "@/lib/store";
-import { Modal } from "@/components/ui/modal";
-import { StatCard as Card } from "@/components/ui/stat-card";
-import { Transaction } from "@/types/transaction";
-import { motion } from "framer-motion";
-import Button from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
-type FinanceTransaction = Transaction & { category: string };
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { 
+  CreditCard, 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign,
+  Plus,
+  ArrowUpRight,
+  FileText,
+  Clock,
+  CheckCircle2
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function FinancePage() {
-  const {
-    transactions,
-    addTransaction,
-    deleteTransaction,
-    updateTransaction,
-  } = useFinanceStore() as unknown as {
-    transactions: FinanceTransaction[];
-    addTransaction: (tx: FinanceTransaction) => void;
-    deleteTransaction: (id: string) => void;
-    updateTransaction: (tx: FinanceTransaction) => void;
-  };
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Paid" | "Pending">("All");
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [editTx, setEditTx] = useState<FinanceTransaction | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
-    type: "",
-    category: "",
-    amount: "",
-    status: "Pending" as "Paid" | "Pending",
-  });
-
-  const filtered = transactions.filter((t) => {
-    const matchSearch = t.type.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "All" || t.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const revenue = transactions
-    .filter((t) => t.category === "Income")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-
-  const expenses = transactions
-    .filter((t) => t.category === "Expense")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-
-  const balance = revenue - expenses;
-
-  const handleSubmit = () => {
-    const type = form.type.trim();
-    const category = form.category.trim();
-    const amountNumber = Number(form.amount);
-
-    if (!type || !category) {
-      setFormError("Type and category are required.");
-      return;
-    }
-    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setFormError("Enter a valid amount greater than 0.");
-      return;
-    }
-
-    if (editTx) {
-      updateTransaction({ ...editTx, ...form, type, category, amount: String(amountNumber) });
-    } else {
-      addTransaction({
-        id: Date.now().toString(),
-        ...form,
-        type,
-        category,
-        amount: String(amountNumber),
-      } as FinanceTransaction);
-    }
-
-    setForm({ type: "", category: "", amount: "", status: "Pending" });
-    setEditTx(null);
-    setIsOpen(false);
-    setFormError(null);
-  };
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 w-full max-w-6xl mx-auto"
-    >
+    <div className="space-y-8 max-w-7xl mx-auto">
       {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-semibold">Finance</h1>
-        <p className="text-sm text-muted">
-          Manage transactions and financial reports
-        </p>
-      </div>
-      {/* KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card title="Revenue" value={`₹${revenue}`} />
-        <Card title="Expenses" value={`₹${expenses}`} />
-        <Card title="Balance" value={`₹${balance}`} />
-      </div>
-      {/* FILTER BAR */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-        <Input
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-card border border-border px-3 py-2 rounded-lg sm:max-w-xs"
-        />
-
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as "All" | "Paid" | "Pending")
-          }
-          className="bg-card border border-border px-3 py-2 rounded-lg sm:w-40"
-        >
-          <option>All</option>
-          <option>Paid</option>
-          <option>Pending</option>
-        </select>
-
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="sm:ml-auto bg-card hover:bg-card px-4 py-2 rounded-lg text-text-main w-full sm:w-auto"
-        >
-          Add Transaction
-        </Button>
-      </div>
-      {/* TABLE */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm min-w-[720px]">
-          <thead className="bg-surface text-muted">
-            <tr>
-              <th className="p-3 text-left">Type</th>
-              <th>Category</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th className="text-right pr-4">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.map((tx) => (
-              <tr
-                key={tx.id}
-                className="border-t border-border hover:bg-card transition"
-              >
-                <td className="p-3">{tx.type}</td>
-                <td>{tx.category}</td>
-                <td>₹{tx.amount}</td>
-                <td>{tx.status}</td>
-
-                <td className="text-right pr-4 space-x-3">
-                  <Button
-                    onClick={() => {
-                      setEditTx(tx);
-                      setForm({
-                        type: tx.type,
-                        category: tx.category,
-                        amount: String(tx.amount),
-                        status: tx.status as "Paid" | "Pending",
-                      });
-                      setIsOpen(true);
-                    }}
-                    className="text-muted"
-                  >
-                    Edit
-                  </Button>
-
-                  <Button
-                    onClick={() => deleteTransaction(tx.id)}
-                    className="text-danger"
-                  >
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center p-4 text-muted">
-                  No transactions found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {/* MODAL */}
-      <Modal
-        isOpen={isOpen}
-        onClose={() => {
-          setIsOpen(false);
-          setFormError(null);
-        }}
-        title={editTx ? "Edit Transaction" : "Add Transaction"}
-      >
-        <div className="space-y-3">
-          {formError && <p className="text-sm text-danger">{formError}</p>}
-          <Input
-            placeholder="Type"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="w-full bg-card border border-border p-2 rounded"
-          />
-
-          <select
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className="w-full bg-card border border-border p-2 rounded"
-          >
-            <option value="">Category</option>
-            <option value="Income">Income</option>
-            <option value="Expense">Expense</option>
-          </select>
-
-          <Input
-            placeholder="Amount"
-            value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="w-full bg-card border border-border p-2 rounded"
-          />
-
-          <Button
-            onClick={handleSubmit}
-            className="bg-card w-full py-2 rounded text-text-main"
-            disabled={!form.type.trim() || !form.category.trim() || !form.amount.trim()}
-          >
-            Save
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-text-main tracking-tight">Financial Control</h1>
+          <p className="text-text-muted mt-1">Real-time treasury management and invoicing.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/finance/invoices">View Invoices</Link>
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            New Invoice
           </Button>
         </div>
-      </Modal>
-    </motion.div>
+      </div>
+
+      {/* QUICK STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <FinanceStat 
+          title="Total Revenue" 
+          value="₹84.2M" 
+          change="+18%" 
+          trend="up" 
+          icon={TrendingUp} 
+        />
+        <FinanceStat 
+          title="Outstanding" 
+          value="₹12.4M" 
+          change="+2.4%" 
+          trend="down" 
+          icon={Clock} 
+        />
+        <FinanceStat 
+          title="Cash in Hand" 
+          value="₹45.1M" 
+          change="+5.1%" 
+          trend="up" 
+          icon={DollarSign} 
+        />
+        <FinanceStat 
+          title="Tax Liability" 
+          value="₹4.2M" 
+          change="Estimated" 
+          trend="neutral" 
+          icon={FileText} 
+        />
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* REVENUE CHART */}
+        <Card variant="glass" className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Cash Flow</CardTitle>
+              <p className="text-xs text-text-muted mt-1">Monthly breakdown of income vs expenses</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 text-[10px] font-bold text-emerald-500">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                INCOME
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-danger/10 text-[10px] font-bold text-danger">
+                <div className="w-1.5 h-1.5 rounded-full bg-danger" />
+                EXPENSES
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="h-[350px] flex items-end justify-between px-8 pb-8">
+            {[40, 60, 45, 80, 55, 90, 75, 85, 65, 95, 100, 80].map((h, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 group w-full max-w-[32px]">
+                <div className="w-full flex items-end gap-1 h-[250px]">
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: `${h}%` }}
+                    className="flex-1 bg-primary/40 group-hover:bg-primary transition-all rounded-t-sm" 
+                  />
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: `${h * 0.6}%` }}
+                    className="flex-1 bg-danger/40 group-hover:bg-danger transition-all rounded-t-sm" 
+                  />
+                </div>
+                <span className="text-[10px] text-text-muted font-medium">M{i+1}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* RECENT INVOICES */}
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Upcoming Receivables</CardTitle>
+            <p className="text-xs text-text-muted mt-1">Highest value pending invoices</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {[
+              { client: "Global Tech Inc", amount: "₹450,000", date: "May 20", status: "Sent" },
+              { client: "SoftBank Group", amount: "₹820,000", date: "May 25", status: "Sent" },
+              { client: "TCS Solutions", amount: "₹120,000", date: "Jun 02", status: "Draft" },
+              { client: "Reliance Ind", amount: "₹1.2M", date: "Jun 10", status: "Sent" },
+            ].map((inv, i) => (
+              <div key={i} className="flex items-center justify-between group cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:border-primary/50 transition-all">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-text-main">{inv.client}</p>
+                    <p className="text-[10px] text-text-muted">Due {inv.date}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-text-main">{inv.amount}</p>
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                    inv.status === "Sent" ? "bg-blue-500/10 text-blue-500" : "bg-text-muted/10 text-text-muted"
+                  )}>
+                    {inv.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+            <Button variant="ghost" className="w-full text-xs text-primary" asChild>
+              <Link href="/finance/invoices">View All Invoices <ArrowUpRight className="ml-2 w-3 h-3" /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
+function FinanceStat({ title, value, change, trend, icon: Icon }: any) {
+  return (
+    <Card variant="default" className="relative overflow-hidden group">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{title}</p>
+          <Icon className="w-4 h-4 text-text-muted" />
+        </div>
+        <div className="mt-4 flex items-end justify-between">
+          <h2 className="text-2xl font-bold text-text-main">{value}</h2>
+          <div className={cn(
+            "text-[10px] font-bold px-2 py-0.5 rounded-full",
+            trend === "up" ? "bg-emerald-500/10 text-emerald-500" : 
+            trend === "down" ? "bg-danger/10 text-danger" : "bg-surface text-text-muted"
+          )}>
+            {change}
+          </div>
+        </div>
+      </CardContent>
+      <div className="absolute bottom-0 left-0 h-1 bg-primary/20 w-full" />
+      <motion.div 
+        initial={{ width: 0 }}
+        whileHover={{ width: "100%" }}
+        className="absolute bottom-0 left-0 h-1 bg-primary" 
+      />
+    </Card>
+  );
+}

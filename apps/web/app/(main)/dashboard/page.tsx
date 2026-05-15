@@ -1,6 +1,5 @@
 "use client";
 
-import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { 
@@ -12,6 +11,7 @@ import {
   Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActivityTimeline } from "@/components/dashboard/activity-timeline";
 
 export default function DashboardPage() {
   return (
@@ -75,27 +75,18 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Performance Insights</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-t border-border/50">
+          <CardContent className="h-[400px] flex items-center justify-center border-t border-border/50">
             <p className="text-text-muted text-sm italic">Premium Charts Engine (Recharts) ready to be wired.</p>
           </CardContent>
         </Card>
 
         <Card variant="default">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Enterprise Pulse</CardTitle>
+            <p className="text-xs text-text-muted mt-1">Real-time audit and activity feed</p>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-start gap-4">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
-                  <div>
-                    <p className="text-sm font-medium text-text-main">New payroll batch approved</p>
-                    <p className="text-xs text-text-muted mt-0.5">Finance Module • 2h ago</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <CardContent className="px-6 py-4">
+            <ActivityTimeline />
           </CardContent>
         </Card>
       </div>

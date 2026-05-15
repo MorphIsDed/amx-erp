@@ -1,8 +1,9 @@
 "use client";
 import Button from "@/components/ui/button";
-import { Menu, Bell, Search, Command } from "lucide-react";
+import { Menu, Search, Command } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { NotificationHub } from "./notification-hub";
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   return (
@@ -36,10 +37,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5 text-text-muted" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary border-2 border-surface" />
-        </Button>
+        <NotificationHub />
         
         <div className="h-8 w-px bg-border mx-2" />
         
