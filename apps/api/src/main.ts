@@ -3,9 +3,27 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import helmet from 'helmet';
+import compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Security Headers
+  app.use(helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: [`'self'`],
+        styleSrc: [`'self'`, `'unsafe-inline'`],
+        imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+        scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+      },
+    },
+  }));
+
+  // Performance - Compression
+  app.use(compression());
 
   // CORS
   app.enableCors();
@@ -25,7 +43,7 @@ async function bootstrap() {
   // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('AMX ERP API')
-    .setDescription('The API foundation for AMX ERP system')
+    .setDescription('The AI-Powered Enterprise Resource Planning API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -34,10 +52,15 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger docs available at: http://localhost:${port}/api/docs`);
+  
+  console.log('--------------------------------------------------');
+  console.log(`🚀 AMX-ERP Backend Sorted & Operational`);
+  console.log(`🌍 Endpoint: http://localhost:${port}`);
+  console.log(`📖 Documentation: http://localhost:${port}/api/docs`);
+  console.log('--------------------------------------------------');
 }
+
 bootstrap().catch((err) => {
-  console.error(err);
+  console.error('Failed to start AMX-ERP Backend:', err);
   process.exit(1);
 });

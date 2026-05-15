@@ -12,6 +12,7 @@ import { ActivityModule } from './common/activity/activity.module';
 import { JobsModule } from './common/jobs/jobs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
     JobsModule,
     NotificationsModule,
     InventoryModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

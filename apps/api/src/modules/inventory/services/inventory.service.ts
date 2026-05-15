@@ -48,16 +48,68 @@ export class InventoryService {
     return movement;
   }
 
+  async createWarehouse(tenantId: string, data: any) {
+    return this.prisma.warehouse.create({
+      data: { ...data, tenantId }
+    });
+  }
+
+  async getWarehouses(tenantId: string) {
+    return this.prisma.warehouse.findMany({
+      where: { tenantId }
+    });
+  }
+
+  async getMovements(tenantId: string, query: { productId?: string; warehouseId?: string; limit?: number }) {
+    return this.prisma.stockMovement.findMany({
+      where: {
+        tenantId,
+        productId: query.productId,
+        warehouseId: query.warehouseId,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: query.limit || 50,
+      include: {
+        product: true,
+        warehouse: true,
+      }
+    });
+  }
+
+  async getStockByWarehouse(tenantId: string, warehouseId: string) {
+    const movements = await this.prisma.stockMovement.findMany({
+      where: { tenantId, warehouseId },
+      include: { product: true }
+    });
+
+    // Group by product and calculate
+    const levels: Record<string, any> = {};
+    movements.forEach(m => {
+      if (!levels[m.productId]) {
+        levels[m.productId] = { 
+          product: m.product, 
+          quantity: 0 
+        };
+      }
+      const change = (m.type === StockMovementType.IN || m.type === StockMovementType.ADJUSTMENT) 
+        ? m.quantity 
+        : -m.quantity;
+      levels[m.productId].quantity += change;
+    });
+
+    return Object.values(levels);
+  }
+
   async getStockLevel(tenantId: string, productId: string) {
     const movements = await this.prisma.stockMovement.findMany({
       where: { tenantId, productId }
     });
 
     return movements.reduce((acc, curr) => {
-      if (curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT) {
-        return acc + curr.quantity;
-      }
-      return acc - curr.quantity;
+      const change = (curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT) 
+        ? curr.quantity 
+        : -curr.quantity;
+      return acc + change;
     }, 0);
   }
 }
