@@ -3,44 +3,129 @@
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { 
+  TrendingUp, 
+  Users, 
+  ShoppingBag, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Activity
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-8 w-full max-w-5xl mx-auto"
-    >
-      {/* PAGE HEADER */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-main tracking-tight">Dashboard</h1>
-        <p className="text-sm text-text-muted mt-1">
-          Overview of system metrics and performance.
-        </p>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* HEADER */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+      >
+        <div>
+          <h1 className="text-3xl font-bold text-text-main tracking-tight">Executive Overview</h1>
+          <p className="text-text-muted mt-1">Welcome back. Here is what is happening with your enterprise today.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 rounded-lg bg-surface border border-border text-sm font-medium">
+            May 15, 2026
+          </div>
+        </div>
+      </motion.div>
+
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatWidget 
+          title="Total Revenue" 
+          value="₹24.8M" 
+          change="+12.5%" 
+          trend="up" 
+          icon={TrendingUp} 
+          color="text-emerald-500"
+        />
+        <StatWidget 
+          title="Active Employees" 
+          value="1,240" 
+          change="+4" 
+          trend="up" 
+          icon={Users} 
+          color="text-blue-500"
+        />
+        <StatWidget 
+          title="Open Orders" 
+          value="312" 
+          change="-8.2%" 
+          trend="down" 
+          icon={ShoppingBag} 
+          color="text-amber-500"
+        />
+        <StatWidget 
+          title="System Health" 
+          value="99.9%" 
+          change="Optimal" 
+          trend="neutral" 
+          icon={Activity} 
+          color="text-primary"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Revenue" value="₹2.4M" />
-        <StatCard title="Employees" value="1,240" />
-        <StatCard title="Orders" value="320" />
-      </div>
+      {/* CHARTS / MAIN CONTENT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card variant="glass" className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Performance Insights</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[300px] flex items-center justify-center border-t border-border/50">
+            <p className="text-text-muted text-sm italic">Premium Charts Engine (Recharts) ready to be wired.</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="border-b border-border pb-4">
-          <CardTitle className="text-base">Overview</CardTitle>
-          <p className="text-sm text-text-muted mt-1">
-            System status and recent activity.
-          </p>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <p className="text-sm text-text-muted">
-            Your ERP dashboard is now fully operational.
-          </p>
-        </CardContent>
-      </Card>
-    </motion.div>
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
+                  <div>
+                    <p className="text-sm font-medium text-text-main">New payroll batch approved</p>
+                    <p className="text-xs text-text-muted mt-0.5">Finance Module • 2h ago</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
-
+function StatWidget({ title, value, change, trend, icon: Icon, color }: any) {
+  return (
+    <Card variant="default" className="group hover:border-primary/50 transition-all duration-300">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className={cn("p-2 rounded-lg bg-surface border border-border group-hover:border-primary/30", color)}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className={cn(
+            "flex items-center text-xs font-medium px-2 py-1 rounded-full",
+            trend === "up" ? "text-emerald-500 bg-emerald-500/10" : 
+            trend === "down" ? "text-danger bg-danger/10" : "text-text-muted bg-surface"
+          )}>
+            {trend === "up" && <ArrowUpRight className="w-3 h-3 mr-1" />}
+            {trend === "down" && <ArrowDownRight className="w-3 h-3 mr-1" />}
+            {change}
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-sm font-medium text-text-muted">{title}</p>
+          <h2 className="text-2xl font-bold text-text-main mt-1">{value}</h2>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

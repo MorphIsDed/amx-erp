@@ -1,80 +1,89 @@
 "use client";
+
 import Link from "next/link";
-import { BarChart3, Briefcase, Home, Package, Settings, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { 
+  LayoutDashboard, 
+  Users, 
+  CreditCard, 
+  Truck, 
+  Settings, 
+  Briefcase,
+  ChevronRight,
+  LogOut,
+  Building2
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function Sidebar({
-  className,
-  onNavigate,
-}: {
-  className?: string;
-  onNavigate?: () => void;
-}) {
+const menuItems = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "HR & Payroll", icon: Users, href: "/hr" },
+  { label: "Finance", icon: CreditCard, href: "/finance" },
+  { label: "Supply Chain", icon: Truck, href: "/supply-chain" },
+  { label: "Projects", icon: Briefcase, href: "/projects" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+];
+
+export default function Sidebar({ onNavigate, className }: { onNavigate?: () => void, className?: string }) {
+  const pathname = usePathname();
+
   return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.2,
-      }}
-    >
-      <div
-        className={`w-64 max-w-[85vw] h-[100dvh] bg-card border-r border-border p-5 flex flex-col ${className ?? ""}`}
-      >
-        <h1 className="text-lg font-semibold mb-8">AMX ERP</h1>
-        <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1">
-          <NavItem icon={<Home size={18} />} label="Dashboard" href="/dashboard" onNavigate={onNavigate} />
-          <NavItem icon={<Users size={18} />} label="HR" href="/hr" onNavigate={onNavigate} />
-          <NavItem icon={<Package size={18} />} label="Supply Chain" href="/supply-chain" onNavigate={onNavigate} />
-          <NavItem icon={<BarChart3 size={18} />} label="Analytics" href="/analytics" onNavigate={onNavigate} />
-          <NavItem icon={<Briefcase size={18} />} label="Projects" href="/projects" onNavigate={onNavigate} />
-          <NavItem icon={<Settings size={18} />} label="Settings" href="/settings" onNavigate={onNavigate} />
-        </nav>
+    <aside className={cn(
+      "w-64 h-screen border-r border-border bg-surface flex flex-col transition-all duration-300",
+      className
+    )}>
+      {/* LOGO AREA */}
+      <div className="p-6 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+          <Building2 className="text-slate-950 w-5 h-5" />
+        </div>
+        <span className="font-bold text-lg tracking-tight text-text-main">AMX-ERP</span>
       </div>
-    </motion.div>
+
+      {/* NAV ITEMS */}
+      <nav className="flex-1 px-4 space-y-1">
+        {menuItems.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                isActive 
+                  ? "bg-primary/10 text-primary shadow-sm" 
+                  : "text-text-muted hover:bg-card hover:text-text-main"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className={cn(
+                  "w-4 h-4 transition-colors",
+                  isActive ? "text-primary" : "text-text-muted group-hover:text-text-main"
+                )} />
+                {item.label}
+              </div>
+              {isActive && <ChevronRight className="w-4 h-4" />}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* USER FOOTER */}
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center gap-3 px-2 py-3 rounded-xl bg-card border border-border/50">
+          <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
+            AD
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-text-main truncate">Admin User</p>
+            <p className="text-[10px] text-text-muted truncate">Acme Corp</p>
+          </div>
+          <button className="text-text-muted hover:text-danger transition-colors">
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }
-
-function NavItem({
-  icon,
-  label,
-  href,
-  onNavigate,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  href: string;
-  onNavigate?: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.2,
-      }}
-    >
-      <Link
-        href={href}
-        onClick={onNavigate}
-        className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted hover:bg-card transition"
-      >
-        {icon}
-        <span>{label}</span>
-      </Link>
-    </motion.div>
-  );
-}
-

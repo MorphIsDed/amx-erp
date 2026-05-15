@@ -5,6 +5,7 @@ import Topbar from "@/components/layout/topbar";
 import Button from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
+import { CommandPalette } from "@/components/ui/CommandPalette";
 
 export default function MainLayout({
   children,
@@ -25,6 +26,7 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen bg-card text-text-main">
+      <CommandPalette />
       <div className="flex min-h-screen">
         <div className="hidden md:block">
           <Sidebar />
