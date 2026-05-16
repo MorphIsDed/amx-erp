@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { API_ENDPOINTS } from "../../lib/api-config";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   INVOICE_CREATED: FileText,
@@ -36,11 +37,12 @@ export function ActivityTimeline() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const res = await fetch("http://localhost:3001/activity", {
+        const res = await fetch(API_ENDPOINTS.ACTIVITY, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setActivities(data);
       } catch (err) {

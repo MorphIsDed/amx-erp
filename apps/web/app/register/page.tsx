@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -46,7 +47,7 @@ export default function RegisterPage() {
     setLoading(true);
     
     try {
-      const response = await fetch("http://localhost:3001/tenants/register", {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

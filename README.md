@@ -1,180 +1,72 @@
-# AMX ERP Monorepo
+# AMX-ERP: The Spatial Enterprise OS
 
-This repository is a Turborepo-based monorepo containing a NestJS API and a Next.js web app.
+AMX-ERP is a next-generation Enterprise Resource Planning (ERP) platform designed as a living, spatially-aware operating system for the modern enterprise. It moves beyond static dark-mode dashboards into a fluid, reactive organism that breathes and responds to data in real-time.
 
-## Project structure
+---
 
-- `apps/api` — NestJS backend API
-- `apps/web` — Next.js frontend app
-- `packages/eslint-config` — shared ESLint configs
-- `packages/typescript-config` — shared TypeScript configs
-- `packages/ui` — shared UI components
+## ✨ Design Philosophy
 
-## Requirements
+AMX-ERP represents a radical shift in enterprise UX:
+- **Aurora Mesh Gradients:** Dynamic, time-shifting backgrounds that create a sense of life.
+- **Spatial Depth:** A 6-level elevation system using glass-morphism, Z-index-aware shadows, and refraction.
+- **Physics-Based UI:** Spring-based animations and magnetic interactions powered by Framer Motion.
+- **Chromatic Refraction:** Iridescent gradient borders and plasma-effect focus states.
 
-See `requirements.md` for the required tools, environment, and repository setup guidance.
+---
 
-## Getting started
+## 🏗️ Monorepo Structure
 
-1. Install dependencies from the repository root:
+Built on **Turborepo** for extreme performance and scalability:
 
+- `apps/web` — **Next.js 16** (App Router) powered by Tailwind CSS v4 and Framer Motion.
+- `apps/api` — **NestJS** event-driven backbone utilizing EventEmitter2 and BullMQ.
+- `packages/ui` — Shared component library and design tokens.
+- `packages/typescript-config` & `eslint-config` — Shared architectural standards.
+
+---
+
+## 🚀 Core Features
+
+- **Executive Overview:** Real-time performance insights with glow-tipped data visualizations.
+- **Human Resources:** Fluid onboarding, payroll, and attendance with spatial tab transitions.
+- **Financial Control:** Iridescent treasury management and automated invoicing.
+- **Supply Chain:** Real-time stock tracking with glowing warehouse distribution indicators.
+- **AI Intelligence:** Predictive modeling and anomalous behavior detection with holographic reporting.
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+- **Node.js 18+**
+- **pnpm 9+**
+
+### 2. Installation
 ```powershell
 pnpm install
 ```
 
-2. Start both apps in development mode from the root:
-
+### 3. Development
+Start the entire ecosystem:
 ```powershell
 pnpm dev
 ```
+Access the OS at: `http://localhost:3000`
 
-3. Open the application in your browser:
+---
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:3000` if the API is started separately, but note the API does not expose a frontend homepage by default.
+## ⚙️ Technical Stack
 
-## Run a single app
+- **Frontend:** Next.js 16, Tailwind v4, Framer Motion, Lucide, Recharts.
+- **Backend:** NestJS, EventEmitter2, BullMQ.
+- **State Management:** Zustand.
+- **Architecture:** Monorepo with Turborepo.
 
-### Start the API only
+---
 
-```powershell
-cd apps/api
-pnpm run start:dev
-```
+## 📜 Development Standards
 
-### Start the web app only
-
-```powershell
-cd apps/web
-pnpm run dev
-```
-
-## Build
-
-From the root:
-
-```powershell
-pnpm build
-```
-
-## Commit and Git guidance
-
-- Open the repo at the root folder: `D:\amx-erp`
-- Do not keep nested `.git` folders inside subprojects such as `apps/api`
-- If you see line-ending warnings, configure Git with `core.autocrlf` or add `.gitattributes`
-
-## Notes
-
-- `apps/api` is a backend service and does not necessarily render a homepage at `/`
-- `apps/web` is the frontend app and is the main browser entrypoint
-- If you want the repo to be clean, make sure there are no nested Git repositories in subfolders
-
-pnpm dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- Use the **6-level depth system** defined in `tokens.css`.
+- All animations must use **spring physics** for an organic feel.
+- Maintain **SEO best practices** using semantic HTML and descriptive meta-tags.
+- Ensure all interactive elements have unique, descriptive IDs.

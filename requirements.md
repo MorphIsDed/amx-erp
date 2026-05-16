@@ -1,48 +1,49 @@
-# Project Requirements
+# AMX-ERP Project Requirements
 
-This project is a JavaScript/TypeScript monorepo built with Turborepo, NestJS, and Next.js.
+This document outlines the technical environment and operational requirements for the AMX-ERP platform.
 
-## Required tools
+## 🛠️ Required Toolchain
 
-- Node.js 18 or newer
-- pnpm 9 or newer
-- Git
-- A code editor such as Visual Studio Code
+- **Node.js:** version 18.0.0 or newer (LTS recommended)
+- **pnpm:** version 9.0.0 or newer
+- **Git:** for version control
+- **Terminal:** PowerShell (Windows), zsh/bash (macOS/Linux)
 
-## Recommended tools
+## 💻 System Resources
 
-- npm or Yarn (optional)
-- `turbo` CLI (installed automatically by pnpm if needed)
+- **RAM:** Minimum 8 GB (16 GB recommended for smooth monorepo development)
+- **CPU:** Quad-core processor or better
+- **Storage:** ~1 GB for dependencies and build artifacts
+- **Network:** Access to `npm` registry and Google Fonts CDN
 
-## System requirements
+## 🌐 Environment Setup
 
-- Windows, macOS, or Linux
-- At least 4 GB of RAM for local development
-- Ports 3000 and 5173 free for local servers
+### Ports
+The following ports must be available:
+- `3000`: Web Frontend (Next.js)
+- `3001`: Backend API (NestJS)
+- `5173`: Local Dev Sandbox (if applicable)
 
-## Repository expectations
-
-- The repository should be initialized once at the root (`D:\amx-erp`)
-- There must not be nested `.git` directories inside subfolders such as `apps/api`
-- Use root-level dependencies and workspace package management via `pnpm install`
-
-## Line endings
-
-On Windows, Git may show warnings about LF/CRLF conversion. The safe settings are:
-
+### Git Configuration
+To prevent line-ending issues on Windows:
 ```powershell
 git config --global core.autocrlf true
 ```
 
-Or add a `.gitattributes` file with:
+## 🏗️ Repository Architecture
 
-```text
-* text=auto
-```
+- **Root Access:** Always run `pnpm` commands from `D:\amx-erp`.
+- **Dependency Management:** Never use `npm` or `yarn`. Strictly use `pnpm` to maintain workspace integrity.
+- **Turbo Caching:** The project uses `turbo` for caching builds. Ensure you have write access to the `.turbo` directory.
 
-Then normalize with:
+## 🎨 Design & Performance Requirements
 
-```powershell
-git add --renormalize .
-git commit -m "Normalize line endings"
-```
+- **Browser Support:** Modern evergreen browsers (Chrome, Edge, Safari, Firefox).
+- **GPU Acceleration:** Required for smooth 60fps animations (Framer Motion).
+- **Display:** Recommended 1440p or 1080p for the best spatial UI experience.
+
+## 🔒 Security & Data
+
+- **Auth:** Uses JWT-based authentication.
+- **Real-time:** Requires support for Server-Sent Events (SSE).
+- **Storage:** Local storage used for session management and theme persistence.

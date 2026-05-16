@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "../lib/api-config";
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -10,15 +11,17 @@ export function useNotifications() {
     // Initial fetch
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("http://localhost:3001/notifications", {
+        const res = await fetch(API_ENDPOINTS.NOTIFICATIONS, {
           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setNotifications(data);
         
-        const countRes = await fetch("http://localhost:3001/notifications/unread-count", {
+        const countRes = await fetch(API_ENDPOINTS.NOTIFICATIONS_UNREAD, {
           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
+        if (!countRes.ok) throw new Error(`HTTP error! status: ${countRes.status}`);
         const countData = await countRes.json();
         setUnreadCount(countData);
       } catch (err) {
@@ -32,7 +35,7 @@ export function useNotifications() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const eventSource = new EventSource(`http://localhost:3001/notifications/stream?token=${token}`);
+    const eventSource = new EventSource(API_ENDPOINTS.NOTIFICATIONS_STREAM(token));
 
     eventSource.onmessage = (event) => {
       const newNotification = JSON.parse(event.data);
@@ -52,7 +55,7 @@ export function useNotifications() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/notifications/${id}/read`, {
+      await fetch(API_ENDPOINTS.NOTIFICATIONS_READ(id), {
         method: "PATCH",
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       });
