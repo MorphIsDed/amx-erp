@@ -32,4 +32,10 @@ export class WarehousesController {
   getStock(@Request() req: any, @Param('id') id: string) {
     return this.inventoryService.getStockByWarehouse(req.user.tenantId, id);
   }
+
+  @Get('stats/overview')
+  @ApiOperation({ summary: 'Get high-level inventory and supply chain stats' })
+  getStats(@Request() req: any) {
+    return this.inventoryService.getDashboardStats(req.user.tenantId);
+  }
 }

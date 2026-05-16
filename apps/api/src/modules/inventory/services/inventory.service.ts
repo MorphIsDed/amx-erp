@@ -112,4 +112,52 @@ export class InventoryService {
       return acc + change;
     }, 0);
   }
+
+  async getDashboardStats(tenantId: string) {
+    const products = await this.prisma.product.count({ where: { tenantId } });
+    const warehouses = await this.prisma.warehouse.count({ where: { tenantId } });
+    const recentMovements = await this.prisma.stockMovement.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: { product: true }
+    });
+
+    // Total Stock Valuation (Aggregated)
+    const allMovements = await this.prisma.stockMovement.findMany({
+      where: { tenantId },
+      include: { product: true }
+    });
+
+    const valuation = allMovements.reduce((acc, curr) => {
+      const change = (curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT) 
+        ? curr.quantity 
+        : -curr.quantity;
+      return acc + (change * (curr.product.price || 0));
+    }, 0);
+
+    // Warehouse Distribution
+    const allWarehouses = await this.prisma.warehouse.findMany({
+      where: { tenantId },
+      include: { stockMovements: { include: { product: true } } }
+    });
+
+    const distribution = allWarehouses.map(w => {
+      const level = w.stockMovements.reduce((acc, curr) => {
+        const change = (curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT) 
+          ? curr.quantity 
+          : -curr.quantity;
+        return acc + change;
+      }, 0);
+      return { id: w.id, name: w.name, level };
+    });
+
+    return {
+      products,
+      warehouses,
+      totalValuation: valuation,
+      recentMovements,
+      distribution
+    };
+  }
 }

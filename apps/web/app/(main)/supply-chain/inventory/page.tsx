@@ -16,17 +16,45 @@ import {
   MoveHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const inventory = [
-  { sku: "LOG-MX3", name: "Logitech MX Master 3", category: "Peripherals", stock: 142, unit: "pcs", status: "In Stock" },
-  { sku: "MAC-M3P", name: "MacBook Pro M3 14\"", category: "Laptops", stock: 12, unit: "pcs", status: "Low Stock" },
-  { sku: "DEL-U27", name: "Dell UltraSharp 27\"", category: "Monitors", stock: 45, unit: "pcs", status: "In Stock" },
-  { sku: "KEY-K2V", name: "Keychron K2 V2", category: "Peripherals", stock: 8, unit: "pcs", status: "Low Stock" },
-  { sku: "APL-IP15", name: "iPhone 15 Pro 256GB", category: "Mobile", stock: 0, unit: "pcs", status: "Out of Stock" },
-];
+import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 export default function InventoryMasterPage() {
   const [filter, setFilter] = useState("all");
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.PRODUCTS, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        
+        // Fetch stock levels for each product
+        const productsWithStock = await Promise.all(data.map(async (p: any) => {
+          const stockRes = await fetch(API_ENDPOINTS.PRODUCT_STOCK(p.id), {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          });
+          const stock = await stockRes.json();
+          return { ...p, stock };
+        }));
+
+        setProducts(productsWithStock);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-text-faint">Accessing Inventory Master Catalog...</div>;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

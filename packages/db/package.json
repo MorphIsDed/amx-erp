@@ -7,13 +7,20 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node src/seed.ts"
+  },
+  "prisma": {
+    "seed": "ts-node src/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "prisma": "^5.22.0",
-    "typescript": "5.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "5.9.2",
+    "@types/bcrypt": "^5.0.2"
   }
 }
