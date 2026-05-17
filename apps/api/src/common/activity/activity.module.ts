@@ -3,10 +3,11 @@ import { ActivityService } from './activity.service';
 import { ActivityListener } from './activity.listener';
 import { ActivityController } from './activity.controller';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
 
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, IdempotencyModule],
   controllers: [ActivityController],
   providers: [ActivityService, ActivityListener],
   exports: [ActivityService],

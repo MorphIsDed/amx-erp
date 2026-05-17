@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS_STREAM: (token: string) => `${API_BASE_URL}/notifications/stream?token=${token}`,
   NOTIFICATIONS_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
   ACTIVITY: `${API_BASE_URL}/activity`,
+  ACTIVITY_STREAM: (token: string) => `${API_BASE_URL}/activity/stream?token=${token}`,
   REGISTER: `${API_BASE_URL}/tenants/register`,
   PRODUCTS: `${API_BASE_URL}/inventory/products`,
   PRODUCT_STOCK: (id: string) => `${API_BASE_URL}/inventory/products/${id}/stock`,

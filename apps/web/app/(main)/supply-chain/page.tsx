@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_ENDPOINTS } from "@/lib/api-config";
+import { useInventoryStream } from "@/hooks/use-inventory-stream";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } };
@@ -14,6 +15,26 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 export default function SupplyChainOverview() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { stockUpdates } = useInventoryStream();
+
+  useEffect(() => {
+    if (stockUpdates.length > 0 && stats) {
+      const latestUpdate = stockUpdates[0];
+      setStats((prev: any) => {
+        if (!prev) return prev;
+        
+        // Calculate the valuation change (very rough estimate for visual feedback)
+        const change = latestUpdate.movement?.type === 'IN' ? latestUpdate.movement.quantity : -latestUpdate.movement.quantity;
+        const valueChange = change * (latestUpdate.movement?.product?.price || 100);
+
+        return {
+          ...prev,
+          totalValuation: prev.totalValuation + valueChange,
+          recentMovements: [latestUpdate.movement, ...prev.recentMovements].slice(0, 10)
+        };
+      });
+    }
+  }, [stockUpdates]);
 
   useEffect(() => {
     const fetchStats = async () => {

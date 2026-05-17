@@ -30,9 +30,23 @@ const colorMap: Record<string, string> = {
   PRODUCT_CREATED: "text-warning bg-warning/10 shadow-[0_0_12px_-3px_rgba(251,191,36,0.3)]",
 };
 
+import { useActivityStream } from "../../hooks/use-activity-stream";
+
 export function ActivityTimeline() {
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activityUpdates } = useActivityStream();
+
+  useEffect(() => {
+    if (activityUpdates.length > 0) {
+      const latest = activityUpdates[0];
+      setActivities(prev => {
+        // Prevent duplicate logs if they somehow arrive both via stream and fetch
+        if (prev.some(a => a.id === latest.id)) return prev;
+        return [latest, ...prev].slice(0, 50);
+      });
+    }
+  }, [activityUpdates]);
 
   useEffect(() => {
     const fetchActivity = async () => {
