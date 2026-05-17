@@ -9,5 +9,12 @@ export const API_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/tenants/register`,
   PRODUCTS: `${API_BASE_URL}/inventory/products`,
   PRODUCT_STOCK: (id: string) => `${API_BASE_URL}/inventory/products/${id}/stock`,
+  INVENTORY_STREAM: (token: string) => `${API_BASE_URL}/inventory/products/stream?token=${token}`,
   WAREHOUSES: `${API_BASE_URL}/inventory/warehouses`,
+  PURCHASE_ORDERS: `${API_BASE_URL}/inventory/purchase-orders`,
+  PURCHASE_ORDER_STATUS: (id: string) => `${API_BASE_URL}/inventory/purchase-orders/${id}/status`,
+  HR_EMPLOYEES: `${API_BASE_URL}/hr/employees`,
+  HR_PAYROLL_RUNS: `${API_BASE_URL}/hr/payroll/runs`,
+  HR_PAYROLL_PROCESS: (id: string) => `${API_BASE_URL}/hr/payroll/runs/${id}/process`,
+  DASHBOARD_OVERVIEW: `${API_BASE_URL}/analytics/dashboard/overview`,
 };

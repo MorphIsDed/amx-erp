@@ -116,8 +116,14 @@ export default function InventoryMasterPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {inventory.map((item) => (
-                <tr key={item.sku} className="hover:bg-surface/30 transition-colors group">
+              {products
+                .filter(p => {
+                  if (filter === "all") return true;
+                  const status = p.stock > 50 ? "in stock" : p.stock > 0 ? "low stock" : "out of stock";
+                  return status === filter;
+                })
+                .map((item) => (
+                <tr key={item.id} className="hover:bg-surface/30 transition-colors group">
                   <td className="px-6 py-4">
                     <span className="text-xs font-mono font-bold text-primary px-2 py-1 bg-primary/5 rounded border border-primary/10">
                       {item.sku}
@@ -134,7 +140,7 @@ export default function InventoryMasterPage() {
                   <td className="px-6 py-4 text-sm text-text-muted">{item.category}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-text-main">{item.stock} {item.unit}</span>
+                      <span className="text-sm font-bold text-text-main">{item.stock} {item.unit || 'pcs'}</span>
                       <div className="w-24 h-1 bg-border rounded-full mt-1 overflow-hidden">
                         <div 
                           className={cn(
@@ -147,7 +153,7 @@ export default function InventoryMasterPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <StockStatusBadge status={item.status} />
+                    <StockStatusBadge status={item.stock > 50 ? "In Stock" : item.stock > 0 ? "Low Stock" : "Out of Stock"} />
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">

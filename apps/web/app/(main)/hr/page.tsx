@@ -1,23 +1,42 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Button from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Users, UserCheck, UserMinus, Plus, Search, Filter, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } };
 const tabs = ["employees", "departments", "payroll", "attendance"];
-const employees = [
-  { name: "Arjun Sharma", role: "Sr. Engineer", dept: "Technology", status: "Active", date: "Jan 12, 2024" },
-  { name: "Priya Patel", role: "Product Manager", dept: "Product", status: "Active", date: "Mar 05, 2024" },
-  { name: "Rahul Verma", role: "HR Specialist", dept: "HR", status: "On Leave", date: "May 20, 2023" },
-  { name: "Ananya Iyer", role: "UX Designer", dept: "Design", status: "Active", date: "Oct 15, 2024" },
-];
 
 export default function HRPage() {
   const [tab, setTab] = useState("employees");
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.HR_EMPLOYEES, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch employees");
+        const data = await res.json();
+        setEmployees(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-text-faint">Accessing Workforce Records...</div>;
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-7xl mx-auto">
       <motion.div variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -46,45 +65,121 @@ export default function HRPage() {
       </motion.div>
 
       <motion.div variants={item}>
-        <Card variant="default" className="overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4 border-b border-border/20">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint" />
-              <input placeholder="Search employees..." className="w-full bg-surface/60 border border-border/30 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-text-faint" />
+        {tab === "employees" && (
+          <Card variant="default" className="overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4 border-b border-border/20">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint" />
+                <input placeholder="Search employees..." className="w-full bg-surface/60 border border-border/30 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-text-faint" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-2" />Filters</Button>
+                <Button variant="outline" size="sm">Export</Button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-2" />Filters</Button>
-              <Button variant="outline" size="sm">Export</Button>
-            </div>
-          </div>
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead><tr className="border-b border-border/20">
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Department</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Joining Date</th>
-                <th className="px-6 py-4"></th>
-              </tr></thead>
-              <tbody className="divide-y divide-border/15">
-                {employees.map((emp, i) => (
-                  <motion.tr key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="hover:bg-primary/[0.02] transition-colors group">
-                    <td className="px-6 py-4"><div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs">{emp.name.split(" ").map((n) => n[0]).join("")}</div>
-                      <div><p className="text-sm font-semibold text-text-main">{emp.name}</p><p className="text-xs text-text-faint">{emp.role}</p></div>
-                    </div></td>
-                    <td className="px-6 py-4 text-sm text-text-muted">{emp.dept}</td>
-                    <td className="px-6 py-4"><span className={cn("px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider", emp.status === "Active" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>{emp.status}</span></td>
-                    <td className="px-6 py-4 text-xs text-text-faint font-mono">{emp.date}</td>
-                    <td className="px-6 py-4 text-right"><button className="text-text-faint hover:text-text-main transition-colors p-1 rounded-lg hover:bg-card"><MoreHorizontal className="w-5 h-5" /></button></td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead><tr className="border-b border-border/20">
+                  <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Employee</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Department</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-text-faint uppercase tracking-wider">Joining Date</th>
+                  <th className="px-6 py-4"></th>
+                </tr></thead>
+                <tbody className="divide-y divide-border/15">
+                  {employees.map((emp, i) => (
+                    <motion.tr key={emp.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="hover:bg-primary/[0.02] transition-colors group">
+                      <td className="px-6 py-4"><div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs">{emp.firstName[0]}{emp.lastName[0]}</div>
+                        <div><p className="text-sm font-semibold text-text-main">{emp.firstName} {emp.lastName}</p><p className="text-xs text-text-faint">{emp.employeeId}</p></div>
+                      </div></td>
+                      <td className="px-6 py-4 text-sm text-text-muted">{emp.department?.name || "Unassigned"}</td>
+                      <td className="px-6 py-4"><span className={cn("px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider", emp.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>{emp.status}</span></td>
+                      <td className="px-6 py-4 text-xs text-text-faint font-mono">{new Date(emp.hireDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right"><button className="text-text-faint hover:text-text-main transition-colors p-1 rounded-lg hover:bg-card"><MoreHorizontal className="w-5 h-5" /></button></td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        )}
+        {tab === "payroll" && <PayrollTab />}
       </motion.div>
     </motion.div>
+  );
+}
+
+function PayrollTab() {
+  const [runs, setRuns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRuns = async () => {
+    try {
+      const res = await fetch(API_ENDPOINTS.HR_PAYROLL_RUNS, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const data = await res.json();
+      setRuns(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRuns();
+  }, []);
+
+  const initiatePayroll = async () => {
+    try {
+      const start = new Date();
+      start.setDate(1);
+      const end = new Date();
+      end.setMonth(end.getMonth() + 1);
+      end.setDate(0);
+
+      const res = await fetch(API_ENDPOINTS.HR_PAYROLL_RUNS, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          periodStart: start.toISOString(),
+          periodEnd: end.toISOString()
+        })
+      });
+      if (res.ok) fetchRuns();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-text-faint">Loading Payroll Cycles...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-bold text-text-main">Payroll Cycles</h3>
+        <Button onClick={initiatePayroll} size="sm"><Plus className="w-4 h-4 mr-2" />New Payroll Run</Button>
+      </div>
+      <div className="grid grid-cols-1 gap-4">
+        {runs.map((run) => (
+          <Card key={run.id} variant="glass" className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-text-main">Payroll Period: {new Date(run.periodStart).toLocaleDateString()} - {new Date(run.periodEnd).toLocaleDateString()}</p>
+              <p className="text-xs text-text-faint mt-1">Status: <span className="text-primary font-bold uppercase">{run.status}</span> | {run._count.payslips} Payslips</p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-text-main">₹{run.totalAmount.toLocaleString()}</p>
+              <Button variant="outline" size="sm" className="mt-2 h-8 text-[10px] font-bold uppercase">View Details</Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 

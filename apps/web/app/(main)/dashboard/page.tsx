@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActivityTimeline } from "@/components/dashboard/activity-timeline";
+import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,9 +34,34 @@ const item = {
 };
 
 export default function DashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.DASHBOARD_OVERVIEW, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch dashboard data");
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOverview();
+  }, []);
+
   const hours = new Date().getHours();
   const greeting =
     hours < 12 ? "Good morning" : hours < 18 ? "Good afternoon" : "Good evening";
+
+  if (loading) return <div className="p-12 text-center text-text-faint font-medium">Synchronizing Enterprise Data...</div>;
 
   return (
     <motion.div
@@ -76,8 +103,8 @@ export default function DashboardPage() {
       >
         <StatWidget
           title="Total Revenue"
-          value="₹24.8M"
-          change="+12.5%"
+          value={`₹${(data?.stats?.totalRevenue / 1000000).toFixed(1)}M`}
+          change={`+${data?.stats?.growth}%`}
           trend="up"
           icon={TrendingUp}
           accentFrom="from-primary"
@@ -85,18 +112,18 @@ export default function DashboardPage() {
         />
         <StatWidget
           title="Active Employees"
-          value="1,240"
-          change="+4"
-          trend="up"
+          value={data?.stats?.headcount?.toLocaleString()}
+          change="+0"
+          trend="neutral"
           icon={Users}
           accentFrom="from-info"
           accentTo="to-accent"
         />
         <StatWidget
-          title="Open Orders"
-          value="312"
-          change="-8.2%"
-          trend="down"
+          title="Inventory Items"
+          value={data?.stats?.activeSourcing?.toLocaleString()}
+          change="+0"
+          trend="neutral"
           icon={ShoppingBag}
           accentFrom="from-warning"
           accentTo="to-rose"
@@ -124,36 +151,45 @@ export default function DashboardPage() {
               <CardTitle>Performance Insights</CardTitle>
             </div>
             <p className="text-xs text-text-faint mt-1">
-              Real-time enterprise metrics
+              Monthly revenue distribution
             </p>
           </CardHeader>
           <CardContent className="h-[400px] flex items-end justify-between px-6 pb-8 border-t border-border/20">
-            {/* Mini bar chart visualization */}
-            {[35, 55, 42, 70, 58, 85, 65, 78, 50, 90, 72, 95].map(
-              (h, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center gap-2 group w-full max-w-[28px]"
-                >
-                  <div className="w-full h-[300px] flex items-end">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{
-                        duration: 0.8,
-                        delay: i * 0.06,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
-                      className="w-full rounded-t-md bg-gradient-to-t from-primary/60 to-primary/20 group-hover:from-primary group-hover:to-primary/40 transition-all duration-300 relative"
-                    >
-                      <div className="absolute top-0 left-0 right-0 h-px bg-primary shadow-[0_0_8px_rgba(52,211,153,0.5)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.div>
+            {/* Real monthly revenue trend */}
+            {data?.revenueTrend?.map(
+              (item: any, i: number) => {
+                const maxVal = Math.max(...data.revenueTrend.map((t: any) => t.amount), 1);
+                const height = (item.amount / maxVal) * 100;
+                return (
+                  <div
+                    key={i}
+                    className="flex flex-col items-center gap-2 group w-full max-w-[28px]"
+                  >
+                    <div className="w-full h-[300px] flex items-end">
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: `${Math.max(5, height)}%` }}
+                        transition={{
+                          duration: 0.8,
+                          delay: i * 0.06,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        className="w-full rounded-t-md bg-gradient-to-t from-primary/60 to-primary/20 group-hover:from-primary group-hover:to-primary/40 transition-all duration-300 relative"
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-px bg-primary shadow-[0_0_8px_rgba(52,211,153,0.5)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {item.amount > 0 && (
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card border border-border p-1 rounded text-[8px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                            ₹{(item.amount / 1000).toFixed(1)}k
+                          </div>
+                        )}
+                      </motion.div>
+                    </div>
+                    <span className="text-[10px] text-text-faint font-mono">
+                      {item.month}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-text-faint font-mono">
-                    M{i + 1}
-                  </span>
-                </div>
-              )
+                );
+              }
             )}
           </CardContent>
         </Card>

@@ -18,15 +18,54 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const purchaseOrders = [
-  { id: "PO-2024-001", vendor: "Logitech Global", warehouse: "Main Hub", amount: "₹1,24,000", status: "Received", date: "May 10" },
-  { id: "PO-2024-002", vendor: "Apple Inc", warehouse: "Mumbai Hub", amount: "₹4,50,000", status: "Ordered", date: "May 12" },
-  { id: "PO-2024-003", vendor: "Dell Technologies", warehouse: "Main Hub", amount: "₹82,000", status: "Pending Approval", date: "May 14" },
-  { id: "PO-2024-004", vendor: "Samsung Elec", warehouse: "Delhi Depot", amount: "₹15,200", status: "Draft", date: "May 15" },
-];
+import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 export default function PurchaseOrdersPage() {
   const [filter, setFilter] = useState("all");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch(API_ENDPOINTS.PURCHASE_ORDERS, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch POs");
+      const data = await res.json();
+      setOrders(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleReceive = async (id: string) => {
+    try {
+      const res = await fetch(API_ENDPOINTS.PURCHASE_ORDER_STATUS(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ status: 'RECEIVED' })
+      });
+      if (res.ok) {
+        fetchOrders(); // Refresh
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-text-faint">Initializing Procurement Systems...</div>;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -88,30 +127,40 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {purchaseOrders.map((po) => (
+              {orders
+                .filter(o => {
+                  if (filter === "all") return true;
+                  return o.status.toLowerCase().replace('_', ' ') === filter;
+                })
+                .map((po) => (
                 <tr key={po.id} className="hover:bg-surface/30 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors">
                         <FileText className="w-4 h-4" />
                       </div>
-                      <span className="text-sm font-bold text-text-main">{po.id}</span>
+                      <span className="text-sm font-bold text-text-main">{po.poNumber}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-text-main">{po.vendor}</span>
+                    <span className="text-sm font-medium text-text-main">{po.vendor.name}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-text-muted">{po.warehouse}</td>
+                  <td className="px-6 py-4 text-sm text-text-muted">{po.warehouse.name}</td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-text-main">{po.amount}</span>
+                    <span className="text-sm font-bold text-text-main">₹{po.totalAmount.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
                     <POStatusBadge status={po.status} />
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {po.status === "Ordered" && (
-                        <Button size="sm" variant="outline" className="h-8 text-[10px] font-bold uppercase">
+                      {po.status === "ORDERED" && (
+                        <Button 
+                          onClick={() => handleReceive(po.id)}
+                          size="sm" 
+                          variant="outline" 
+                          className="h-8 text-[10px] font-bold uppercase"
+                        >
                           <PackageCheck className="w-3.5 h-3.5 mr-1.5" />
                           Receive
                         </Button>
@@ -132,29 +181,32 @@ export default function PurchaseOrdersPage() {
 }
 
 function POStatusBadge({ status }: { status: string }) {
+  const s = status.toUpperCase();
   const styles: any = {
-    Received: "bg-emerald-500/10 text-emerald-500",
-    Ordered: "bg-blue-500/10 text-blue-500",
-    "Pending Approval": "bg-amber-500/10 text-amber-500",
-    Draft: "bg-text-muted/10 text-text-muted",
-    Cancelled: "bg-danger/10 text-danger",
+    RECEIVED: "bg-emerald-500/10 text-emerald-500",
+    ORDERED: "bg-blue-500/10 text-blue-500",
+    PENDING_APPROVAL: "bg-amber-500/10 text-amber-500",
+    DRAFT: "bg-text-muted/10 text-text-muted",
+    CANCELLED: "bg-danger/10 text-danger",
   };
 
   const icons: any = {
-    Received: <CheckCircle2 className="w-3 h-3 mr-1.5" />,
-    Ordered: <Truck className="w-3 h-3 mr-1.5" />,
-    "Pending Approval": <Clock className="w-3 h-3 mr-1.5" />,
-    Draft: <FileText className="w-3 h-3 mr-1.5" />,
-    Cancelled: <AlertCircle className="w-3 h-3 mr-1.5" />,
+    RECEIVED: <CheckCircle2 className="w-3 h-3 mr-1.5" />,
+    ORDERED: <Truck className="w-3 h-3 mr-1.5" />,
+    PENDING_APPROVAL: <Clock className="w-3 h-3 mr-1.5" />,
+    DRAFT: <FileText className="w-3 h-3 mr-1.5" />,
+    CANCELLED: <AlertCircle className="w-3 h-3 mr-1.5" />,
   };
+
+  const label = status.replace('_', ' ');
 
   return (
     <div className={cn(
       "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-      styles[status]
+      styles[s] || styles.DRAFT
     )}>
-      {icons[status]}
-      {status}
+      {icons[s] || icons.DRAFT}
+      {label}
     </div>
   );
 }

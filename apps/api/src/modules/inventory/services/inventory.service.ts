@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StockMovementType } from '@repo/db';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { fromEvent } from 'rxjs';
 
 @Injectable()
 export class InventoryService {
@@ -45,7 +46,23 @@ export class InventoryService {
     });
 
     this.eventEmitter.emit('inventory.movement.created', movement);
+    
+    // Emit real-time stock update
+    const newStockLevel = await this.getStockLevel(tenantId, data.productId);
+    this.eventEmitter.emit('inventory.stock.updated', {
+      tenantId,
+      payload: {
+        productId: data.productId,
+        stockLevel: newStockLevel,
+        movement,
+      }
+    });
+
     return movement;
+  }
+
+  getStockStream() {
+    return fromEvent(this.eventEmitter, 'inventory.stock.updated');
   }
 
   async createWarehouse(tenantId: string, data: any) {

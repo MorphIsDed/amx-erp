@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInvoiceDto, UpdateInvoiceStatusDto } from './dto/invoice.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { TaxEngine } from '../../common/utils/tax-engine';
 
 @Injectable()
 export class InvoicesService {
@@ -10,26 +11,16 @@ export class InvoicesService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async create(tenantId: string, dto: CreateInvoiceDto) {
+  async create(tenantId: string, dto: CreateInvoiceDto, userId?: string) {
     let subTotal = 0;
-    let taxTotal = 0;
-
-    const itemsData = dto.items.map((item) => {
-      const amount = item.quantity * item.unitPrice;
-      const taxAmount = amount * ((item.taxRate || 0) / 100);
-      subTotal += amount;
-      taxTotal += taxAmount;
-
-      return {
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        taxRate: item.taxRate || 0,
-        amount: amount,
-      };
+    
+    // Calculate basic subtotal first
+    dto.items.forEach(item => {
+      subTotal += item.quantity * item.unitPrice;
     });
 
-    const totalAmount = subTotal + taxTotal;
+    // Use TaxEngine to get unified GST data
+    const taxData = TaxEngine.calculateGST(subTotal, 18); // Default 18% GST
 
     const invoice = await this.prisma.invoice.create({
       data: {
@@ -38,16 +29,22 @@ export class InvoicesService {
         dueDate: new Date(dto.dueDate),
         currency: dto.currency || 'INR',
         exchangeRate: dto.exchangeRate || 1.0,
-        subTotal,
-        taxTotal,
-        totalAmount,
+        subTotal: taxData.subTotal,
+        taxTotal: taxData.totalTax,
+        totalAmount: taxData.totalAmount,
         clientName: dto.clientName,
         clientEmail: dto.clientEmail,
         clientAddress: dto.clientAddress,
         notes: dto.notes,
         tenantId,
         items: {
-          create: itemsData,
+          create: dto.items.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            taxRate: 18,
+            amount: item.quantity * item.unitPrice,
+          })),
         },
       },
       include: {
@@ -55,7 +52,15 @@ export class InvoicesService {
       },
     });
 
-    this.eventEmitter.emit('invoice.created', invoice);
+    this.eventEmitter.emit('invoice.created', { invoice, userId });
+    this.eventEmitter.emit('audit.log', {
+      action: 'INVOICE_CREATED',
+      entityType: 'INVOICE',
+      entityId: invoice.id,
+      tenantId,
+      userId,
+      details: { invoiceNumber: invoice.invoiceNumber, total: invoice.totalAmount }
+    });
 
     return invoice;
   }
@@ -91,11 +96,23 @@ export class InvoicesService {
     return invoice;
   }
 
-  async updateStatus(tenantId: string, id: string, dto: UpdateInvoiceStatusDto) {
-    return this.prisma.invoice.updateMany({
-      where: { id, tenantId },
+  async updateStatus(tenantId: string, id: string, dto: UpdateInvoiceStatusDto, userId?: string) {
+    const invoice = await this.prisma.invoice.update({
+      where: { id },
       data: { status: dto.status },
     });
+
+    this.eventEmitter.emit('invoice.status.updated', { invoice, userId });
+    this.eventEmitter.emit('audit.log', {
+      action: 'INVOICE_STATUS_CHANGED',
+      entityType: 'INVOICE',
+      entityId: invoice.id,
+      tenantId,
+      userId,
+      details: { newStatus: dto.status }
+    });
+
+    return invoice;
   }
 
   async getStats(tenantId: string) {
