@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -12,33 +12,12 @@ import {
   LogOut,
   Building2,
   BarChart3,
-  Zap,
+  ShieldCheck,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-
-const navSections = [
-  {
-    label: "CORE",
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { label: "Analytics", icon: BarChart3, href: "/analytics" },
-    ],
-  },
-  {
-    label: "OPERATIONS",
-    items: [
-      { label: "HR & Payroll", icon: Users, href: "/hr" },
-      { label: "Finance", icon: CreditCard, href: "/finance" },
-      { label: "Supply Chain", icon: Truck, href: "/supply-chain" },
-      { label: "Projects", icon: Briefcase, href: "/projects" },
-    ],
-  },
-  {
-    label: "SYSTEM",
-    items: [{ label: "Settings", icon: Settings, href: "/settings" }],
-  },
-];
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function Sidebar({
   onNavigate,
@@ -48,6 +27,58 @@ export default function Sidebar({
   className?: string;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    import("js-cookie").then((Cookies) => {
+      Cookies.default.remove("amx_auth");
+      Cookies.default.remove("amx_role");
+    });
+    logout();
+    router.push("/login");
+  };
+
+  // Determine allowed items based on user role
+  const userRole = user?.role || "viewer";
+
+  const getNavSections = () => {
+    const sections = [
+      {
+        label: "CORE",
+        items: [
+          { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+          { label: "Analytics", icon: BarChart3, href: "/analytics" },
+        ],
+      },
+      {
+        label: "OPERATIONS",
+        items: [
+          { label: "HR & Payroll", icon: Users, href: "/hr", roles: ["admin", "hr"] },
+          { label: "Finance", icon: CreditCard, href: "/finance", roles: ["admin", "finance"] },
+          { label: "Supply Chain", icon: Truck, href: "/supply-chain", roles: ["admin", "inventory"] },
+          { label: "Projects", icon: Briefcase, href: "/projects" },
+        ],
+      },
+      {
+        label: "SYSTEM",
+        items: [{ label: "Settings", icon: Settings, href: "/settings" }],
+      },
+    ];
+
+    // Filter items inside sections
+    return sections.map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.roles || item.roles.includes(userRole))
+    })).filter(section => section.items.length > 0);
+  };
+
+  const navSections = getNavSections();
+
+  // Get initials for avatar
+  const initials = user?.name
+    ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "G";
 
   return (
     <aside
@@ -136,19 +167,23 @@ export default function Sidebar({
           {/* Avatar with status ring */}
           <div className="relative">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-rose flex items-center justify-center text-white text-xs font-bold shadow-sm">
-              AD
+              {initials}
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-surface-0" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-text-main truncate">
-              Admin User
+              {user?.name || "Executive Guest"}
             </p>
-            <p className="text-[10px] text-text-faint truncate">
-              Acme Corp
+            <p className="text-[10px] text-text-faint truncate font-mono uppercase">
+              {userRole}
             </p>
           </div>
-          <button className="text-text-faint hover:text-danger transition-colors p-1 rounded-lg hover:bg-danger/10">
+          <button 
+            onClick={handleLogout}
+            title="Log Out"
+            className="text-text-faint hover:text-danger transition-colors p-1.5 rounded-lg hover:bg-danger/10 cursor-pointer"
+          >
             <LogOut className="w-4 h-4" />
           </button>
         </div>

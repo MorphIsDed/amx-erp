@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AMX-ERP Frontend App 🌐
 
-## Getting Started
+This is the Next.js 16 Web Application powering the **AMX-ERP Enterprise Spatial OS**. It integrates beautiful glassmorphism designs with a complete **Prisma + SQLite** relational database layer, using Next.js **Server Actions** for sub-millisecond, client-side **Optimistic State Updates**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Key Modules & Capabilities
+
+- **Executive Core Analytics:** High-fidelity dynamic data charts powered by `recharts`.
+- **Financial Ledger:** Invoicing, transaction categorization, PDF statement exports (`jspdf`), and CSV data extractions.
+- **Human Resources:** Interactive drag-and-drop onboarding board (`@hello-pangea/dnd`), real-time employee directories, and role filters.
+- **Supply Chain Management:** Inventory stock control and real-time Purchase Order tracking.
+- **Global Command Palette:** High-speed action shortcuts, theme selectors, and system actions (`cmdk`).
+- **Notification Engine:** System-wide live alerts and operational audit logs.
+
+---
+
+## 🛠️ Setup & Local Development
+
+### 1. Database Configuration
+Initialize the local SQLite database file (`dev.db`) and push the Prisma schema:
+```powershell
+npx prisma db push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Hydrate Mock Data
+Populate the database with enterprise-grade mock seeds (contains pre-configured employees, financial records, inventory items, and purchase orders):
+```powershell
+npx prisma db seed
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Start Development Server
+```powershell
+pnpm dev
+```
+Open [http://localhost:3000](http://localhost:3000) to access the ERP interface.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📂 Project Architecture
 
-To learn more about Next.js, take a look at the following resources:
+- `/app` — Next.js 16 App Router pages, Server Actions (`/actions`), and Middleware rules.
+- `/components` — Reusable glassmorphic UI layout elements, dashboard widgets, charts, and modules.
+- `/lib` — Prisma Client configuration (`prisma.ts`), state stores (Zustand), and utility functions.
+- `/prisma` — Relational schema modeling and TypeScript seeding logic.
+- `/styles` — Global stylesheet configurations (`globals.css`) integrating Tailwind v4.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

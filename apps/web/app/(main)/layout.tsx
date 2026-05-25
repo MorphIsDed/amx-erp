@@ -6,6 +6,7 @@ import Button from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function MainLayout({
   children,
@@ -25,9 +26,10 @@ export default function MainLayout({
   }, [isSidebarOpen, closeSidebar]);
 
   return (
-    <div className="min-h-screen bg-background text-text-main relative">
-      {/* Ambient mesh gradient background */}
-      <div className="fixed inset-0 bg-mesh pointer-events-none opacity-60" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background text-text-main relative">
+        {/* Ambient mesh gradient background */}
+        <div className="fixed inset-0 bg-mesh pointer-events-none opacity-60" />
       {/* Subtle top-right aurora blob */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[150px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-accent/[0.02] rounded-full blur-[150px] pointer-events-none" />
@@ -100,5 +102,6 @@ export default function MainLayout({
         )}
       </AnimatePresence>
     </div>
+    </ProtectedRoute>
   );
 }
