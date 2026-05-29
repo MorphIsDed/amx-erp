@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto, UpdateInvoiceStatusDto } from './dto/invoice.dto';
+import { RecordPaymentDto } from './dto/finance.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -70,5 +71,21 @@ export class InvoicesController {
     @Body() dto: UpdateInvoiceStatusDto,
   ) {
     return this.invoicesService.updateStatus(req.user.tenantId, id, dto);
+  }
+
+  @Post(':id/payments')
+  @Roles(Role.ADMIN, Role.FINANCE)
+  @ApiOperation({ summary: 'Record a payment on invoice' })
+  recordPayment(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: RecordPaymentDto,
+  ) {
+    return this.invoicesService.recordPayment(
+      req.user.tenantId,
+      id,
+      dto.amount,
+      req.user.id,
+    );
   }
 }

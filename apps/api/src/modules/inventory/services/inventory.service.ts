@@ -62,6 +62,67 @@ export class InventoryService {
       },
     });
 
+    // Reorder Automation Check
+    const product = await this.prisma.product.findUnique({
+      where: { id: data.productId },
+    });
+
+    if (product && newStockLevel <= product.reorderLevel) {
+      this.eventEmitter.emit('inventory.low_stock', {
+        tenantId,
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        stockLevel: newStockLevel,
+        reorderLevel: product.reorderLevel,
+      });
+
+      if (product.vendorId) {
+        const existingDraftPo = await this.prisma.purchaseOrder.findFirst({
+          where: {
+            tenantId,
+            status: 'DRAFT',
+            vendorId: product.vendorId,
+            items: {
+              some: {
+                productId: product.id,
+              },
+            },
+          },
+        });
+
+        if (!existingDraftPo) {
+          const defaultWarehouse = await this.prisma.warehouse.findFirst({
+            where: { tenantId },
+          });
+
+          if (defaultWarehouse) {
+            await this.prisma.purchaseOrder.create({
+              data: {
+                poNumber: `AUTO-PO-${Date.now()}`,
+                orderDate: new Date(),
+                status: 'DRAFT',
+                totalAmount: product.price * 10,
+                tenantId,
+                vendorId: product.vendorId,
+                warehouseId: defaultWarehouse.id,
+                items: {
+                  create: [
+                    {
+                      quantity: 10,
+                      unitPrice: product.price,
+                      totalPrice: product.price * 10,
+                      productId: product.id,
+                    },
+                  ],
+                },
+              },
+            });
+          }
+        }
+      }
+    }
+
     return movement;
   }
 

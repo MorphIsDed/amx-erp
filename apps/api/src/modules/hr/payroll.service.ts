@@ -21,6 +21,9 @@ export class PayrollService {
     tenantId: string,
     data: { periodStart: Date; periodEnd: Date },
   ) {
+    const periodStart = new Date(data.periodStart);
+    const periodEnd = new Date(data.periodEnd);
+
     const employees = await this.prisma.employee.findMany({
       where: { tenantId, status: 'ACTIVE' },
     });
@@ -31,22 +34,56 @@ export class PayrollService {
     // Create the Run
     const payrollRun = await this.prisma.payrollRun.create({
       data: {
-        periodStart: data.periodStart,
-        periodEnd: data.periodEnd,
+        periodStart,
+        periodEnd,
         status: PayrollStatus.DRAFT,
         totalAmount: 0, // Will update after calculating payslips
         tenantId,
       },
     });
 
-    // Create individual payslips (Mocking salary logic for now)
     let totalRunAmount = 0;
     const _payslips = await Promise.all(
       employees.map(async (emp) => {
-        const basicSalary = 50000; // In a real app, this would come from the Employee contract
-        const allowances = 5000;
-        const deductions = 2000;
-        const netSalary = basicSalary + allowances - deductions;
+        const basicSalary = emp.baseSalary || 50000;
+        const allowances = emp.allowances || 0;
+        let deductions = emp.deductions || 0;
+
+        // Calculate unpaid leave days falling within this period
+        const unpaidLeaves = await this.prisma.leave.findMany({
+          where: {
+            employeeId: emp.id,
+            tenantId,
+            type: 'UNPAID',
+            status: 'APPROVED',
+            startDate: { lte: periodEnd },
+            endDate: { gte: periodStart },
+          },
+        });
+
+        let leaveDays = 0;
+        unpaidLeaves.forEach((leave) => {
+          const start = Math.max(new Date(leave.startDate).getTime(), periodStart.getTime());
+          const end = Math.min(new Date(leave.endDate).getTime(), periodEnd.getTime());
+          const diffTime = Math.max(0, end - start);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+          leaveDays += diffDays;
+        });
+
+        const leavePenalty = Math.round((basicSalary / 30) * leaveDays);
+        const grossSalary = basicSalary + allowances;
+
+        // Tax Engine (Slabs: >100k: 20%, >50k: 10%, else 5%)
+        let tax = 0;
+        if (grossSalary > 100000) {
+          tax = Math.round(grossSalary * 0.20);
+        } else if (grossSalary > 50000) {
+          tax = Math.round(grossSalary * 0.10);
+        } else {
+          tax = Math.round(grossSalary * 0.05);
+        }
+
+        const netSalary = Math.max(0, grossSalary - tax - deductions - leavePenalty);
         totalRunAmount += netSalary;
 
         return this.prisma.payslip.create({
@@ -55,7 +92,7 @@ export class PayrollService {
             payrollRunId: payrollRun.id,
             basicSalary,
             allowances,
-            deductions,
+            deductions: deductions + tax + leavePenalty, // aggregate total deductions including tax/penalty
             netSalary,
             status: PayslipStatus.PENDING,
             tenantId,
@@ -135,5 +172,65 @@ export class PayrollService {
 
     this.eventEmitter.emit('payroll.run.completed', run);
     return run;
+  }
+
+  // --- KPIs ---
+  async getMonthlyPayrollCost(tenantId: string) {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const stats = await this.prisma.payrollRun.findMany({
+      where: {
+        tenantId,
+        status: PayrollStatus.COMPLETED,
+        createdAt: { gte: sixMonthsAgo },
+      },
+      select: {
+        createdAt: true,
+        totalAmount: true,
+      },
+    });
+
+    return stats.map((run) => ({
+      month: new Date(run.createdAt).toLocaleString('default', { month: 'short' }),
+      cost: run.totalAmount,
+    }));
+  }
+
+  async getDepartmentPayrollCost(tenantId: string) {
+    const payslips = await this.prisma.payslip.findMany({
+      where: {
+        tenantId,
+        status: PayslipStatus.PAID,
+      },
+      include: {
+        employee: {
+          include: { department: true },
+        },
+      },
+    });
+
+    const deptCosts: Record<string, number> = {};
+    payslips.forEach((ps) => {
+      const deptName = ps.employee.department?.name || 'Unassigned';
+      deptCosts[deptName] = (deptCosts[deptName] || 0) + ps.netSalary;
+    });
+
+    return Object.keys(deptCosts).map((name) => ({
+      department: name,
+      cost: deptCosts[name],
+    }));
+  }
+
+  async getEmployeePayrollHistory(tenantId: string, employeeId: string) {
+    return this.prisma.payslip.findMany({
+      where: {
+        tenantId,
+        employeeId,
+        status: PayslipStatus.PAID,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { payrollRun: true },
+    });
   }
 }

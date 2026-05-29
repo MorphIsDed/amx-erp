@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PurchaseOrderStatus, StockMovementType } from '@repo/db';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -48,6 +48,19 @@ export class PurchaseOrdersService {
     });
 
     if (!po) throw new NotFoundException('Purchase Order not found');
+
+    // State Workflow Validation
+    if (po.status === PurchaseOrderStatus.CANCELLED || po.status === PurchaseOrderStatus.RECEIVED) {
+      throw new ConflictException(`Cannot change status of a completed or cancelled Purchase Order (Current: ${po.status})`);
+    }
+
+    if (status === PurchaseOrderStatus.APPROVED && po.status !== PurchaseOrderStatus.PENDING_APPROVAL) {
+      throw new ConflictException(`Purchase Order must be in PENDING_APPROVAL status to be APPROVED (Current: ${po.status})`);
+    }
+
+    if (status === PurchaseOrderStatus.RECEIVED && po.status !== PurchaseOrderStatus.APPROVED && po.status !== PurchaseOrderStatus.ORDERED) {
+      throw new ConflictException(`Purchase Order must be APPROVED or ORDERED to be RECEIVED (Current: ${po.status})`);
+    }
 
     const updatedPo = await this.prisma.purchaseOrder.update({
       where: { id },

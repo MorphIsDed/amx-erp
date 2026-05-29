@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { StockMovementType, InvoiceStatus, PurchaseOrderStatus, PayrollStatus, LeaveStatus } from '@repo/db';
 
 @Injectable()
 export class AnalyticsService {
@@ -8,20 +9,16 @@ export class AnalyticsService {
   async getDashboardOverview(tenantId: string) {
     const [revenueData, inventoryData, employeeCount, recentActivity] =
       await Promise.all([
-        // Revenue (Paid Invoices)
         this.prisma.invoice.aggregate({
           where: { tenantId, status: 'PAID' },
           _sum: { totalAmount: true },
         }),
-        // Inventory (Total Stock Items)
         this.prisma.product.count({
           where: { tenantId },
         }),
-        // Employees
         this.prisma.employee.count({
           where: { tenantId, status: 'ACTIVE' },
         }),
-        // Recent Activity
         this.prisma.activityLog.findMany({
           where: { tenantId },
           take: 5,
@@ -30,7 +27,6 @@ export class AnalyticsService {
         }),
       ]);
 
-    // Monthly Revenue Trend (Last 6 months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -49,29 +45,229 @@ export class AnalyticsService {
         totalRevenue: revenueData._sum.totalAmount || 0,
         activeSourcing: inventoryData,
         headcount: employeeCount,
-        growth: 12.5, // Mocked for now
+        growth: 12.5,
       },
       revenueTrend: this.formatMonthlyTrend(monthlyRevenue),
       recentActivity,
     };
   }
 
+  // --- Dashboard Summary ---
+  async getDashboardSummary(tenantId: string) {
+    const [paidInvoices, allExpenses, employeeCount, products, lowStockProducts, pendingInvoices, pendingPOs] =
+      await Promise.all([
+        this.prisma.invoice.aggregate({
+          where: { tenantId, status: InvoiceStatus.PAID },
+          _sum: { totalAmount: true },
+        }),
+        this.prisma.transaction.aggregate({
+          where: { tenantId, type: 'EXPENSE' },
+          _sum: { amount: true },
+        }),
+        this.prisma.employee.count({
+          where: { tenantId, status: 'ACTIVE' },
+        }),
+        this.prisma.product.findMany({
+          where: { tenantId },
+          include: { stockMovements: true },
+        }),
+        this.prisma.product.findMany({
+          where: { tenantId },
+          include: { stockMovements: true },
+        }),
+        this.prisma.invoice.count({
+          where: { tenantId, status: InvoiceStatus.DRAFT },
+        }),
+        this.prisma.purchaseOrder.count({
+          where: { tenantId, status: PurchaseOrderStatus.PENDING_APPROVAL },
+        }),
+      ]);
+
+    // Calculate total stock value and low stock count
+    let inventoryValue = 0;
+    let lowStockCount = 0;
+
+    products.forEach((p) => {
+      const stockLevel = p.stockMovements.reduce((acc, curr) => {
+        const change =
+          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+            ? curr.quantity
+            : -curr.quantity;
+        return acc + change;
+      }, 0);
+      inventoryValue += stockLevel * p.price;
+      if (stockLevel <= p.reorderLevel) {
+        lowStockCount++;
+      }
+    });
+
+    return {
+      revenue: paidInvoices._sum.totalAmount || 0,
+      expenses: allExpenses._sum.amount || 0,
+      profit: (paidInvoices._sum.totalAmount || 0) - (allExpenses._sum.amount || 0),
+      employees: employeeCount,
+      inventoryValue,
+      lowStockItems: lowStockCount,
+      pendingInvoices,
+      pendingPurchaseOrders: pendingPOs,
+    };
+  }
+
+  // --- Finance Charts ---
+  async getFinanceCharts(tenantId: string) {
+    const [invoices, transactions] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where: { tenantId, status: InvoiceStatus.PAID },
+        select: { totalAmount: true, issueDate: true },
+      }),
+      this.prisma.transaction.findMany({
+        where: { tenantId, type: 'EXPENSE' },
+        select: { amount: true, date: true },
+      }),
+    ]);
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const revenueTrend = months.map((m) => ({ month: m, amount: 0 }));
+    const expenseTrend = months.map((m) => ({ month: m, amount: 0 }));
+    const monthlyProfit = months.map((m) => ({ month: m, profit: 0 }));
+
+    invoices.forEach((inv) => {
+      const monthIdx = new Date(inv.issueDate).getMonth();
+      revenueTrend[monthIdx].amount += inv.totalAmount;
+    });
+
+    transactions.forEach((tx) => {
+      const monthIdx = new Date(tx.date).getMonth();
+      expenseTrend[monthIdx].amount += tx.amount;
+    });
+
+    for (let i = 0; i < 12; i++) {
+      monthlyProfit[i].profit = revenueTrend[i].amount - expenseTrend[i].amount;
+    }
+
+    return {
+      revenueTrend,
+      expenseTrend,
+      monthlyProfit,
+    };
+  }
+
+  // --- HR Charts ---
+  async getHRCharts(tenantId: string) {
+    const [employees, leaves] = await Promise.all([
+      this.prisma.employee.findMany({
+        where: { tenantId },
+        select: { hireDate: true, department: { select: { name: true } } },
+      }),
+      this.prisma.leave.findMany({
+        where: { tenantId, status: LeaveStatus.APPROVED },
+        select: { type: true },
+      }),
+    ]);
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const employeeGrowth = months.map((m) => ({ month: m, count: 0 }));
+
+    employees.forEach((emp) => {
+      const monthIdx = new Date(emp.hireDate).getMonth();
+      employeeGrowth[monthIdx].count++;
+    });
+
+    // Accumulate monthly growth
+    let current = 0;
+    for (let i = 0; i < 12; i++) {
+      current += employeeGrowth[i].count;
+      employeeGrowth[i].count = current;
+    }
+
+    const deptDist: Record<string, number> = {};
+    employees.forEach((emp) => {
+      const deptName = emp.department?.name || 'Unassigned';
+      deptDist[deptName] = (deptDist[deptName] || 0) + 1;
+    });
+
+    const leaveDist = {
+      paid: leaves.filter((l) => l.type === 'PAID').length,
+      unpaid: leaves.filter((l) => l.type === 'UNPAID').length,
+    };
+
+    return {
+      employeeGrowth,
+      departmentDistribution: Object.keys(deptDist).map((name) => ({ department: name, count: deptDist[name] })),
+      leaveStatistics: leaveDist,
+    };
+  }
+
+  // --- Inventory Charts ---
+  async getInventoryCharts(tenantId: string) {
+    const [movements, products, warehouses] = await Promise.all([
+      this.prisma.stockMovement.findMany({
+        where: { tenantId },
+        select: { type: true, createdAt: true },
+      }),
+      this.prisma.product.findMany({
+        where: { tenantId },
+        include: { stockMovements: true },
+      }),
+      this.prisma.warehouse.findMany({
+        where: { tenantId },
+        include: { stockMovements: true },
+      }),
+    ]);
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const stockMovementTrend = months.map((m) => ({ month: m, ins: 0, outs: 0 }));
+
+    movements.forEach((m) => {
+      const monthIdx = new Date(m.createdAt).getMonth();
+      if (m.type === StockMovementType.IN) {
+        stockMovementTrend[monthIdx].ins++;
+      } else if (m.type === StockMovementType.OUT) {
+        stockMovementTrend[monthIdx].outs++;
+      }
+    });
+
+    let lowStock = 0;
+    let normalStock = 0;
+
+    products.forEach((p) => {
+      const stockLevel = p.stockMovements.reduce((acc, curr) => {
+        const change =
+          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+            ? curr.quantity
+            : -curr.quantity;
+        return acc + change;
+      }, 0);
+      if (stockLevel <= p.reorderLevel) {
+        lowStock++;
+      } else {
+        normalStock++;
+      }
+    });
+
+    const warehouseDist = warehouses.map((w) => {
+      const level = w.stockMovements.reduce((acc, curr) => {
+        const change =
+          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+            ? curr.quantity
+            : -curr.quantity;
+        return acc + change;
+      }, 0);
+      return { warehouse: w.name, stockLevel: level };
+    });
+
+    return {
+      stockMovementTrend,
+      lowStockDistribution: [
+        { category: 'Low Stock Alert', count: lowStock },
+        { category: 'Optimal Stock', count: normalStock },
+      ],
+      warehouseDistribution: warehouseDist,
+    };
+  }
+
   private formatMonthlyTrend(data: any[]) {
-    // Basic formatting logic to group by month name
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const trend = months.map((m) => ({ month: m, amount: 0 }));
 
     data.forEach((item) => {

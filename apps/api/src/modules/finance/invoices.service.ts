@@ -3,13 +3,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInvoiceDto, UpdateInvoiceStatusDto } from './dto/invoice.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TaxEngine } from '../../common/utils/tax-engine';
+import { CrudService } from '../../common/services/crud.service';
+import { Invoice } from '@repo/db';
 
 @Injectable()
-export class InvoicesService {
+export class InvoicesService extends CrudService<Invoice> {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) {
+    super(prisma.invoice);
+  }
 
   async create(tenantId: string, dto: CreateInvoiceDto, userId?: string) {
     let subTotal = 0;
@@ -73,7 +77,7 @@ export class InvoicesService {
     query: { status?: any; skip?: number; take?: number },
   ) {
     const { status, skip, take } = query;
-    return this.prisma.invoice.findMany({
+    const data = await this.prisma.invoice.findMany({
       where: {
         tenantId,
         status: status,
@@ -87,6 +91,7 @@ export class InvoicesService {
         items: true,
       },
     });
+    return { data };
   }
 
   async findOne(tenantId: string, id: string) {
@@ -99,7 +104,7 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
     }
 
-    return invoice;
+    return { data: invoice as any };
   }
 
   async updateStatus(
@@ -151,5 +156,45 @@ export class InvoicesService {
     });
 
     return stats;
+  }
+
+  async recordPayment(tenantId: string, id: string, amount: number, userId?: string) {
+    const invoiceWrapper = await this.findOne(tenantId, id);
+    const invoice = invoiceWrapper.data as any;
+
+    const newAmountPaid = invoice.amountPaid + amount;
+    let newStatus = invoice.status;
+
+    if (newAmountPaid >= invoice.totalAmount) {
+      newStatus = 'PAID';
+    } else if (newAmountPaid > 0) {
+      newStatus = 'PARTIALLY_PAID';
+    }
+
+    const updated = await this.prisma.invoice.update({
+      where: { id },
+      data: {
+        amountPaid: newAmountPaid,
+        status: newStatus as any,
+      },
+    });
+
+    this.eventEmitter.emit('invoice.paid', {
+      invoice: updated,
+      amountPaid: amount,
+      tenantId,
+      userId,
+    });
+
+    this.eventEmitter.emit('audit.log', {
+      action: 'INVOICE_PAYMENT_RECORDED',
+      entityType: 'INVOICE',
+      entityId: updated.id,
+      tenantId,
+      userId,
+      details: { amount, amountPaid: newAmountPaid, status: newStatus },
+    });
+
+    return updated;
   }
 }

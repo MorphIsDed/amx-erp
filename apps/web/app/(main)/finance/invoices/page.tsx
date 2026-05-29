@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { useList } from "@/hooks/use-crud";
+import { Invoice } from "@repo/db";
 import { 
   Plus, 
   Search, 
-  Filter, 
   Download, 
   MoreHorizontal,
   FileText,
@@ -16,16 +17,68 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const invoices = [
-  { id: "INV-2024-001", client: "Acme Corp", amount: "₹45,000", status: "Paid", date: "May 10, 2024" },
-  { id: "INV-2024-002", client: "Global Tech", amount: "₹120,500", status: "Sent", date: "May 12, 2024" },
-  { id: "INV-2024-003", client: "SoftBank", amount: "₹82,000", status: "Overdue", date: "May 05, 2024" },
-  { id: "INV-2024-004", client: "TCS", amount: "₹15,200", status: "Draft", date: "May 14, 2024" },
-  { id: "INV-2024-005", client: "Reliance", amount: "₹210,000", status: "Paid", date: "May 01, 2024" },
-];
-
 export default function InvoicesPage() {
   const [filter, setFilter] = useState("all");
+  
+  // Use generic React Query hook for invoices
+  const { data: response, isLoading } = useList<Invoice>("finance/invoices");
+  const invoices = response?.data || [];
+
+  const filteredInvoices = invoices.filter(inv => {
+    if (filter === "all") return true;
+    return inv.status.toLowerCase() === filter.toLowerCase();
+  });
+
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      header: 'Invoice',
+      cell: (item: Invoice) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted">
+            <FileText className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-bold text-text-main">{item.invoiceNumber}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'clientName',
+      header: 'Client',
+      cell: (item: Invoice) => (
+        <span className="text-sm font-medium text-text-main">{item.clientName}</span>
+      ),
+    },
+    {
+      key: 'totalAmount',
+      header: 'Amount',
+      cell: (item: Invoice) => (
+        <span className="text-sm font-bold text-text-main">{item.currency} {item.totalAmount.toFixed(2)}</span>
+      ),
+    },
+    {
+      key: 'dueDate',
+      header: 'Due Date',
+      cell: (item: Invoice) => (
+        <span className="text-sm text-text-muted">{new Date(item.dueDate).toLocaleDateString()}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (item: Invoice) => <StatusBadge status={item.status} />,
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right' as const,
+      cell: () => (
+        <button className="p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text-main transition-colors">
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -50,7 +103,7 @@ export default function InvoicesPage() {
       {/* FILTER BAR */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface border border-border p-2 rounded-xl">
         <div className="flex items-center gap-1">
-          {["all", "sent", "paid", "overdue", "draft"].map((f) => (
+          {["all", "draft", "sent", "paid", "partially_paid", "overdue", "cancelled"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -59,7 +112,7 @@ export default function InvoicesPage() {
                 filter === f ? "bg-card text-primary shadow-sm" : "text-text-muted hover:text-text-main"
               )}
             >
-              {f}
+              {f.replace('_', ' ')}
             </button>
           ))}
         </div>
@@ -73,76 +126,43 @@ export default function InvoicesPage() {
       </div>
 
       {/* INVOICE LIST */}
-      <Card variant="default" className="overflow-hidden">
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface/50 border-b border-border">
-                <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Invoice</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Client</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Amount</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Due Date</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-surface/30 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-bold text-text-main">{inv.id}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-text-main">{inv.client}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-text-main">{inv.amount}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-text-muted">{inv.date}</td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={inv.status} />
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text-main transition-colors">
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <DataTable 
+        data={filteredInvoices} 
+        columns={columns} 
+        isLoading={isLoading} 
+        emptyTitle="No invoices found"
+        emptyDescription="Get started by creating your first invoice."
+        emptyActionLabel="Create Invoice"
+      />
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles: any = {
-    Paid: "bg-emerald-500/10 text-emerald-500",
-    Sent: "bg-blue-500/10 text-blue-500",
-    Overdue: "bg-danger/10 text-danger",
-    Draft: "bg-text-muted/10 text-text-muted",
+    PAID: "bg-emerald-500/10 text-emerald-500",
+    SENT: "bg-blue-500/10 text-blue-500",
+    OVERDUE: "bg-danger/10 text-danger",
+    DRAFT: "bg-text-muted/10 text-text-muted",
+    PARTIALLY_PAID: "bg-yellow-500/10 text-yellow-500",
+    CANCELLED: "bg-gray-500/10 text-gray-500",
   };
 
   const icons: any = {
-    Paid: <CheckCircle2 className="w-3 h-3 mr-1.5" />,
-    Sent: <Clock className="w-3 h-3 mr-1.5" />,
-    Overdue: <AlertCircle className="w-3 h-3 mr-1.5" />,
-    Draft: <FileText className="w-3 h-3 mr-1.5" />,
+    PAID: <CheckCircle2 className="w-3 h-3 mr-1.5" />,
+    SENT: <Clock className="w-3 h-3 mr-1.5" />,
+    OVERDUE: <AlertCircle className="w-3 h-3 mr-1.5" />,
+    DRAFT: <FileText className="w-3 h-3 mr-1.5" />,
+    PARTIALLY_PAID: <CheckCircle2 className="w-3 h-3 mr-1.5" />,
+    CANCELLED: <AlertCircle className="w-3 h-3 mr-1.5" />,
   };
 
   return (
     <div className={cn(
       "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-      styles[status]
+      styles[status] || styles.DRAFT
     )}>
-      {icons[status]}
+      {icons[status] || icons.DRAFT}
       {status}
     </div>
   );

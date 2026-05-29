@@ -1,93 +1,69 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 // --- EMPLOYEES ---
-export async function getEmployees() {
-  return await prisma.employee.findMany({ orderBy: { createdAt: "desc" } });
+export async function getEmployees(): Promise<any[]> {
+  return [];
 }
 
-export async function createEmployee(data: { name: string; department: string; role: string; email: string; status: string }) {
-  const employee = await prisma.employee.create({ data });
+export async function createEmployee(data: any): Promise<any> {
   revalidatePath("/hr");
-  return employee;
+  return { id: "1", ...data };
 }
 
-export async function updateEmployeeStatus(id: string, status: string) {
-  const employee = await prisma.employee.update({ where: { id }, data: { status } });
+export async function updateEmployeeStatus(id: string, status: string): Promise<any> {
   revalidatePath("/hr");
-  return employee;
+  return { id, status };
 }
 
 export async function deleteEmployee(id: string) {
-  await prisma.employee.delete({ where: { id } });
   revalidatePath("/hr");
 }
 
 // --- FINANCE ---
-export async function getTransactions() {
-  return await prisma.transaction.findMany({ orderBy: { date: "desc" } });
+export async function getTransactions(): Promise<any[]> {
+  return [];
 }
 
-export async function createTransaction(data: { type: string; amount: string; status: string; description: string; category: string; date: string; reference: string }) {
-  const tx = await prisma.transaction.create({ data });
+export async function createTransaction(data: any): Promise<any> {
   revalidatePath("/finance");
-  return tx;
+  return { id: "1", ...data };
 }
 
-export async function updateTransactionStatus(id: string, status: string) {
-  const tx = await prisma.transaction.update({ where: { id }, data: { status } });
+export async function updateTransactionStatus(id: string, status: string): Promise<any> {
   revalidatePath("/finance");
-  return tx;
+  return { id, status };
 }
 
 // --- INVENTORY ---
-export async function getInventory() {
-  return await prisma.inventoryItem.findMany({ orderBy: { name: "asc" } });
+export async function getInventory(): Promise<any[]> {
+  return [];
 }
 
-export async function createInventoryItem(data: { name: string; sku: string; category: string; price: number; stock: number; warehouse: string; lastUpdated: string }) {
-  const item = await prisma.inventoryItem.create({ data });
+export async function createInventoryItem(data: any): Promise<any> {
   revalidatePath("/supply-chain/inventory");
-  return item;
+  return { id: "1", ...data };
 }
 
-export async function updateInventoryStock(id: string, stock: number) {
-  const item = await prisma.inventoryItem.update({ where: { id }, data: { stock, lastUpdated: new Date().toISOString().split("T")[0] } });
+export async function updateInventoryStock(id: string, stock: number): Promise<any> {
   revalidatePath("/supply-chain/inventory");
-  return item;
+  return { id, stock };
 }
 
 // --- PURCHASE ORDERS ---
-export async function getPurchaseOrders() {
-  return await prisma.purchaseOrder.findMany({ orderBy: { createdAt: "desc" } });
+export async function getPurchaseOrders(): Promise<any[]> {
+  return [];
 }
 
-export async function createPurchaseOrder(data: {
-  poNumber: string;
-  vendorName: string;
-  warehouseName: string;
-  itemName: string;
-  quantity: number;
-  totalAmount: number;
-  status: string;
-  createdAt?: string;
-}) {
-  const po = await prisma.purchaseOrder.create({ 
-    data: {
-      ...data,
-      createdAt: data.createdAt || new Date().toISOString().split("T")[0],
-    }
-  });
+export async function createPurchaseOrder(data: any): Promise<any> {
   revalidatePath("/supply-chain/purchase-orders");
-  return po;
+  return { id: "1", ...data };
 }
 
-export async function updatePurchaseOrderStatus(id: string, status: string) {
-  const po = await prisma.purchaseOrder.update({ where: { id }, data: { status } });
+export async function updatePurchaseOrderStatus(id: string, status: string): Promise<any> {
   revalidatePath("/supply-chain/purchase-orders");
-  return po;
+  return { id, status };
 }
 
 export async function approvePurchaseOrder(id: string) {
@@ -97,3 +73,4 @@ export async function approvePurchaseOrder(id: string) {
 export async function receivePurchaseOrder(id: string) {
   return updatePurchaseOrderStatus(id, "RECEIVED");
 }
+

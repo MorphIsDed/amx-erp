@@ -20,6 +20,30 @@ export class AnalyticsController {
     return this.analyticsService.getDashboardOverview(req.user.tenantId);
   }
 
+  @Get('dashboard-summary')
+  @ApiOperation({ summary: 'Get main dashboard overview values' })
+  getSummary(@Request() req: any) {
+    return this.analyticsService.getDashboardSummary(req.user.tenantId);
+  }
+
+  @Get('finance-charts')
+  @ApiOperation({ summary: 'Get monthly financial analytics metrics' })
+  getFinanceCharts(@Request() req: any) {
+    return this.analyticsService.getFinanceCharts(req.user.tenantId);
+  }
+
+  @Get('hr-charts')
+  @ApiOperation({ summary: 'Get employee metrics and leave stats' })
+  getHRCharts(@Request() req: any) {
+    return this.analyticsService.getHRCharts(req.user.tenantId);
+  }
+
+  @Get('inventory-charts')
+  @ApiOperation({ summary: 'Get stock movement and product distribution levels' })
+  getInventoryCharts(@Request() req: any) {
+    return this.analyticsService.getInventoryCharts(req.user.tenantId);
+  }
+
   @Get('revenue-forecast')
   @ApiOperation({ summary: 'Get AI-powered revenue predictions' })
   getRevenueForecast(@Request() req: any) {

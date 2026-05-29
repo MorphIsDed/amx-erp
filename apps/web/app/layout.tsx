@@ -1,6 +1,7 @@
 import "./globals.css";
 import { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata = {
   title: "AMX ERP — Enterprise Operating System",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <QueryProvider>
+            {children}
+          </QueryProvider>
           <script
             dangerouslySetInnerHTML={{
               __html: `

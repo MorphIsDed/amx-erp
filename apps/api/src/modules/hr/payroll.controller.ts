@@ -55,4 +55,25 @@ export class PayrollController {
   process(@Request() req: any, @Param('id') id: string) {
     return this.payrollService.processPayroll(req.user.tenantId, id);
   }
+
+  @Get('kpis/monthly')
+  @Roles(Role.ADMIN, Role.HR)
+  @ApiOperation({ summary: 'Get monthly payroll cost trends' })
+  getMonthlyCost(@Request() req: any) {
+    return this.payrollService.getMonthlyPayrollCost(req.user.tenantId);
+  }
+
+  @Get('kpis/department')
+  @Roles(Role.ADMIN, Role.HR)
+  @ApiOperation({ summary: 'Get payroll cost distribution by department' })
+  getDeptCost(@Request() req: any) {
+    return this.payrollService.getDepartmentPayrollCost(req.user.tenantId);
+  }
+
+  @Get('kpis/employee/:employeeId')
+  @Roles(Role.ADMIN, Role.HR, Role.MANAGER, Role.EMPLOYEE)
+  @ApiOperation({ summary: 'Get payroll history for a specific employee' })
+  getEmpHistory(@Request() req: any, @Param('employeeId') employeeId: string) {
+    return this.payrollService.getEmployeePayrollHistory(req.user.tenantId, employeeId);
+  }
 }

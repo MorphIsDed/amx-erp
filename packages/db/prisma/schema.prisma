@@ -1,6 +1,5 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -113,6 +112,11 @@ model Tenant {
   payrollRuns         PayrollRun[]
   payslips            Payslip[]
   WebhookSubscription WebhookSubscription[]
+
+  accounts            Account[]
+  journalEntries      JournalEntry[]
+  accountingPeriods   AccountingPeriod[]
+  leaves              Leave[]
 }
 
 model User {
@@ -172,6 +176,11 @@ model Employee {
   updatedAt DateTime @updatedAt
 
   payslips Payslip[]
+  leaves   Leave[]
+
+  baseSalary Float @default(0.0)
+  allowances Float @default(0.0)
+  deductions Float @default(0.0)
 
   @@unique([tenantId, employeeId])
   @@unique([tenantId, email])
@@ -371,6 +380,8 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  reorderLevel Float @default(0.0)
+
   @@unique([tenantId, sku])
 }
 
@@ -469,6 +480,120 @@ model Payslip {
 
   paidAt DateTime?
   status PayslipStatus @default(PENDING)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+}
+
+enum AccountingPeriodStatus {
+  OPEN
+  CLOSED
+}
+
+enum LeaveType {
+  PAID
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Account {
+  id        String      @id @default(uuid())
+  code      String      // Unique within tenant, e.g. "1000", "2000"
+  name      String
+  type      AccountType
+  balance   Float       @default(0.0)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  journalLines JournalLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model JournalEntry {
+  id          String             @id @default(uuid())
+  date        DateTime
+  description String
+  status      JournalEntryStatus @default(DRAFT)
+
+  periodId String
+  period   AccountingPeriod @relation(fields: [periodId], references: [id])
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  lines JournalLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JournalLine {
+  id             String       @id @default(uuid())
+  debit          Float        @default(0.0)
+  credit         Float        @default(0.0)
+
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AccountingPeriod {
+  id        String                 @id @default(uuid())
+  name      String                 // e.g. "Q1-2024", "Jan-2024"
+  startDate DateTime
+  endDate   DateTime
+  status    AccountingPeriodStatus @default(OPEN)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  entries JournalEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Leave {
+  id        String      @id @default(uuid())
+  startDate DateTime
+  endDate   DateTime
+  type      LeaveType
+  status    LeaveStatus @default(PENDING)
+  reason    String?
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
 
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id])
