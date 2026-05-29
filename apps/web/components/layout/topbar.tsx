@@ -1,9 +1,8 @@
 "use client";
 import * as React from "react";
 import Button from "@/components/ui/button";
-import { Menu, Search, Command, Sparkles } from "lucide-react";
+import { Menu, Search, Command } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { NotificationHub } from "./notification-hub";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuthStore } from "@/lib/auth-store";

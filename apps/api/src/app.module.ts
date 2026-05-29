@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { IdempotencyModule } from './common/idempotency/idempotency.module';
+import { AppGraphQLModule } from './graphql/graphql.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { IdempotencyModule } from './common/idempotency/idempotency.module';
     NotificationsModule,
     InventoryModule,
     AnalyticsModule,
+    AppGraphQLModule,
   ],
 })
 export class AppModule {}

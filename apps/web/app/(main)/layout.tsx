@@ -5,7 +5,6 @@ import Topbar from "@/components/layout/topbar";
 import Button from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { CommandPalette } from "@/components/ui/CommandPalette";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function MainLayout({
@@ -34,7 +33,7 @@ export default function MainLayout({
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[150px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-accent/[0.02] rounded-full blur-[150px] pointer-events-none" />
 
-      <CommandPalette />
+
 
       <div className="relative flex min-h-screen">
         {/* Desktop sidebar */}

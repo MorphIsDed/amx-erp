@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Subject } from 'rxjs';
 import { NotificationType } from '@repo/db';
 
@@ -16,7 +18,10 @@ export interface CreateNotificationOptions {
 export class NotificationService {
   private notificationStream = new Subject<any>();
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @InjectQueue('notifications') private readonly notificationsQueue: Queue,
+  ) {}
 
   async create(options: CreateNotificationOptions) {
     const notification = await this.prisma.notification.create({
@@ -30,12 +35,39 @@ export class NotificationService {
       },
     });
 
-    // Push to real-time stream
-    this.notificationStream.next({
-      userId: options.userId,
-      tenantId: options.tenantId,
-      notification,
-    });
+    // Determine channels (defaulting to IN_APP for now if no preferences found, plus EMAIL/WEBHOOK to demonstrate feature)
+    const channels = ['IN_APP', 'EMAIL', 'WEBHOOK'];
+
+    for (const channel of channels) {
+      await this.prisma.notificationDelivery.create({
+        data: {
+          notificationId: notification.id,
+          channel: channel as any,
+          status: 'PENDING',
+        },
+      });
+
+      if (channel === 'IN_APP') {
+        // Push to real-time stream
+        this.notificationStream.next({
+          userId: options.userId,
+          tenantId: options.tenantId,
+          notification,
+        });
+      } else {
+        // Dispatch to BullMQ
+        await this.notificationsQueue.add('deliver', {
+          notificationId: notification.id,
+          channel,
+          tenantId: options.tenantId,
+          payload: {
+            title: options.title,
+            message: options.message,
+            link: options.link,
+          },
+        });
+      }
+    }
 
     return notification;
   }

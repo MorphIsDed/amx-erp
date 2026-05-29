@@ -17,6 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
         <ThemeProvider
@@ -26,6 +27,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           disableTransitionOnChange
         >
           {children}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                      console.log('ServiceWorker registration successful');
+                    }, function(err) {
+                      console.log('ServiceWorker registration failed: ', err);
+                    });
+                  });
+                }
+              `,
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

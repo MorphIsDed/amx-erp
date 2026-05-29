@@ -2,10 +2,20 @@
 
 import * as React from "react";
 import { Command } from "cmdk";
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Truck,
+  Settings,
+  Briefcase,
+  Plus,
+  BarChart3,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Search, LayoutDashboard, Users, FileText, Package, Briefcase, Settings } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuthStore } from "@/lib/auth-store";
-import { Modal } from "@/components/ui/modal";
 
 export function CommandPalette({
   open,
@@ -30,7 +40,7 @@ export function CommandPalette({
   }, [open, onOpenChange]);
 
   const runCommand = React.useCallback(
-    (command: () => unknown) => {
+    (command: () => void) => {
       onOpenChange(false);
       command();
     },
@@ -38,95 +48,173 @@ export function CommandPalette({
   );
 
   return (
-    <Modal
-      isOpen={open}
-      onClose={() => onOpenChange(false)}
-      title="Command Palette"
-    >
-      <Command className="[&_[cmdk-root]]:w-full [&_[cmdk-input-wrapper]]:border-b [&_[cmdk-input-wrapper]]:border-border/10 [&_[cmdk-input-wrapper]]:px-4 [&_[cmdk-input]]:h-14 [&_[cmdk-input]]:w-full [&_[cmdk-input]]:bg-transparent [&_[cmdk-input]]:outline-none [&_[cmdk-input]]:placeholder:text-text-muted [&_[cmdk-item]]:px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]]:text-sm [&_[cmdk-item][data-selected='true']]:bg-primary/10 [&_[cmdk-item][data-selected='true']]:text-primary [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-text-muted [&_[cmdk-empty]]:py-6 [&_[cmdk-empty]]:text-center [&_[cmdk-empty]]:text-sm">
-        <div className="flex items-center border-b border-border/10 px-4">
-          <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
-          <Command.Input
-            placeholder="Search anything..."
-            className="flex h-14 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-text-muted disabled:cursor-not-allowed disabled:opacity-50"
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={() => onOpenChange(false)}
           />
-        </div>
-        <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden">
-          <Command.Empty>No results found.</Command.Empty>
 
-          <Command.Group heading="Navigation">
-            <Command.Item
-              onSelect={() => runCommand(() => router.push("/"))}
-              className="flex cursor-pointer items-center gap-2"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Command.Item>
+          {/* Panel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed left-1/2 top-[18%] z-50 w-full max-w-[580px] -translate-x-1/2"
+          >
+            <Command className="overflow-hidden rounded-2xl border border-border/40 bg-card/95 backdrop-blur-xl shadow-float">
+              {/* Search input area */}
+              <div className="flex items-center border-b border-border/30 px-4 py-3.5 gap-3">
+                <div className="p-1 rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <Command.Input
+                  placeholder="Search or jump to..."
+                  className="flex-1 bg-transparent text-text-main placeholder:text-text-faint outline-none text-sm"
+                />
+                <div className="rounded-lg bg-surface border border-border/50 px-2 py-1 text-[10px] font-mono text-text-faint">
+                  ESC
+                </div>
+              </div>
 
-            {(!user || ["admin", "hr"].includes(user.role)) && (
-              <Command.Item
-                onSelect={() => runCommand(() => router.push("/hr"))}
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                <span>Human Resources</span>
-              </Command.Item>
-            )}
+              {/* Results */}
+              <Command.List className="max-h-[380px] overflow-y-auto p-2 scrollbar-hide">
+                <Command.Empty className="px-4 py-10 text-center text-sm text-text-muted">
+                  No results found.
+                </Command.Empty>
 
-            {(!user || ["admin", "finance"].includes(user.role)) && (
-              <Command.Item
-                onSelect={() => runCommand(() => router.push("/finance"))}
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <Briefcase className="h-4 w-4" />
-                <span>Finance & Ledger</span>
-              </Command.Item>
-            )}
+                <Command.Group
+                  heading="Quick Actions"
+                  className="px-2 py-2 text-[10px] font-semibold text-text-faint uppercase tracking-widest"
+                >
+                  {(!user || ["admin", "hr"].includes(user.role)) && (
+                    <CommandItem
+                      onSelect={() =>
+                        runCommand(() => router.push("/hr"))
+                      }
+                    >
+                      <Plus className="mr-3 h-4 w-4 text-primary" />
+                      <span>New Employee</span>
+                    </CommandItem>
+                  )}
+                  {(!user || ["admin", "finance"].includes(user.role)) && (
+                    <CommandItem
+                      onSelect={() =>
+                        runCommand(() =>
+                          router.push("/finance/invoices")
+                        )
+                      }
+                    >
+                      <Plus className="mr-3 h-4 w-4 text-primary" />
+                      <span>Create Invoice</span>
+                    </CommandItem>
+                  )}
+                </Command.Group>
 
-            {(!user || ["admin", "inventory"].includes(user.role)) && (
-              <Command.Item
-                onSelect={() =>
-                  runCommand(() => router.push("/supply-chain/inventory"))
-                }
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <Package className="h-4 w-4" />
-                <span>Inventory Master</span>
-              </Command.Item>
-            )}
+                <Command.Group
+                  heading="Navigation"
+                  className="mt-1 px-2 py-2 text-[10px] font-semibold text-text-faint uppercase tracking-widest"
+                >
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/dashboard"))
+                    }
+                  >
+                    <LayoutDashboard className="mr-3 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </CommandItem>
 
-            {(!user || ["admin", "inventory", "finance"].includes(user.role)) && (
-              <Command.Item
-                onSelect={() =>
-                  runCommand(() => router.push("/supply-chain/purchase-orders"))
-                }
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                <span>Purchase Orders</span>
-              </Command.Item>
-            )}
+                  {(!user || ["admin", "hr"].includes(user.role)) && (
+                    <CommandItem
+                      onSelect={() =>
+                        runCommand(() => router.push("/hr"))
+                      }
+                    >
+                      <Users className="mr-3 h-4 w-4" />
+                      <span>HR & Payroll</span>
+                    </CommandItem>
+                  )}
 
-            <Command.Item
-              onSelect={() => runCommand(() => router.push("/analytics"))}
-              className="flex cursor-pointer items-center gap-2"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>Analytics & BI</span>
-            </Command.Item>
-          </Command.Group>
+                  {(!user || ["admin", "finance"].includes(user.role)) && (
+                    <CommandItem
+                      onSelect={() =>
+                        runCommand(() => router.push("/finance"))
+                      }
+                    >
+                      <CreditCard className="mr-3 h-4 w-4" />
+                      <span>Finance & Ledger</span>
+                    </CommandItem>
+                  )}
 
-          <Command.Group heading="Actions">
-            <Command.Item
-              onSelect={() => runCommand(() => console.log("Export to CSV"))}
-              className="flex cursor-pointer items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Export current view to CSV</span>
-            </Command.Item>
-          </Command.Group>
-        </Command.List>
-      </Command>
-    </Modal>
+                  {(!user || ["admin", "inventory", "finance"].includes(user.role)) && (
+                    <CommandItem
+                      onSelect={() =>
+                        runCommand(() =>
+                          router.push("/supply-chain")
+                        )
+                      }
+                    >
+                      <Truck className="mr-3 h-4 w-4" />
+                      <span>Supply Chain & Inventory</span>
+                    </CommandItem>
+                  )}
+
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/analytics"))
+                    }
+                  >
+                    <BarChart3 className="mr-3 h-4 w-4" />
+                    <span>Analytics & BI</span>
+                  </CommandItem>
+
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/projects"))
+                    }
+                  >
+                    <Briefcase className="mr-3 h-4 w-4" />
+                    <span>Projects</span>
+                  </CommandItem>
+
+                  <CommandItem
+                    onSelect={() =>
+                      runCommand(() => router.push("/settings"))
+                    }
+                  >
+                    <Settings className="mr-3 h-4 w-4" />
+                    <span>Settings</span>
+                  </CommandItem>
+                </Command.Group>
+              </Command.List>
+            </Command>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function CommandItem({
+  children,
+  onSelect,
+}: {
+  children: React.ReactNode;
+  onSelect: () => void;
+}) {
+  return (
+    <Command.Item
+      onSelect={onSelect}
+      className="flex cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm text-text-muted transition-all duration-200 hover:bg-primary/[0.06] hover:text-text-main aria-selected:bg-primary/[0.06] aria-selected:text-text-main group"
+    >
+      {children}
+    </Command.Item>
   );
 }
