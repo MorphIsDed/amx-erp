@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Param,
+  Put,
+} from '@nestjs/common';
 import { PayrollService } from './payroll.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -16,10 +25,13 @@ export class PayrollController {
   @Post('run')
   @Roles(Role.ADMIN, Role.HR)
   @ApiOperation({ summary: 'Initiate a new payroll run' })
-  createRun(@Request() req: any, @Body() body: { periodStart: string; periodEnd: string }) {
+  createRun(
+    @Request() req: any,
+    @Body() body: { periodStart: string; periodEnd: string },
+  ) {
     return this.payrollService.createPayrollRun(req.user.tenantId, {
       periodStart: new Date(body.periodStart),
-      periodEnd: new Date(body.periodEnd)
+      periodEnd: new Date(body.periodEnd),
     });
   }
 

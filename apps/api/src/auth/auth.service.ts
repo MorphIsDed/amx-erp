@@ -29,7 +29,12 @@ export class AuthService {
       tenant: { connect: { id: registerDto.tenantId } },
     });
 
-    const payload = { sub: user.id, email: user.email, role: user.role, tenantId: user.tenantId };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+    };
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -55,7 +60,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role, tenantId: user.tenantId };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+    };
     return {
       access_token: this.jwtService.sign(payload),
       user: {

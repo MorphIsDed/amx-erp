@@ -64,11 +64,20 @@ export async function getPurchaseOrders() {
   return await prisma.purchaseOrder.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-export async function createPurchaseOrder(data: { poNumber: string; vendorName: string; warehouseName: string; itemName: string; quantity: number; totalAmount: number; status: string }) {
+export async function createPurchaseOrder(data: {
+  poNumber: string;
+  vendorName: string;
+  warehouseName: string;
+  itemName: string;
+  quantity: number;
+  totalAmount: number;
+  status: string;
+  createdAt?: string;
+}) {
   const po = await prisma.purchaseOrder.create({ 
     data: {
       ...data,
-      createdAt: new Date().toISOString().split("T")[0],
+      createdAt: data.createdAt || new Date().toISOString().split("T")[0],
     }
   });
   revalidatePath("/supply-chain/purchase-orders");
@@ -79,4 +88,12 @@ export async function updatePurchaseOrderStatus(id: string, status: string) {
   const po = await prisma.purchaseOrder.update({ where: { id }, data: { status } });
   revalidatePath("/supply-chain/purchase-orders");
   return po;
+}
+
+export async function approvePurchaseOrder(id: string) {
+  return updatePurchaseOrderStatus(id, "ORDERED");
+}
+
+export async function receivePurchaseOrder(id: string) {
+  return updatePurchaseOrderStatus(id, "RECEIVED");
 }

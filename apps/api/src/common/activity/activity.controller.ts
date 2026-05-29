@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards, Request, Query, Sse } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Request,
+  Query,
+  Sse,
+} from '@nestjs/common';
 import { map, filter } from 'rxjs/operators';
 import { ActivityService } from './activity.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -22,7 +29,7 @@ export class ActivityController {
   stream(@Request() req: any) {
     return this.activityService.getStream().pipe(
       filter((data: any) => data.tenantId === req.user.tenantId),
-      map((data: any) => ({ data: data.activity }))
+      map((data: any) => ({ data: data.activity })),
     );
   }
 }

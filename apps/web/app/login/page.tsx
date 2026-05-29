@@ -160,7 +160,7 @@ export default function LoginPage() {
               <div className="mb-6 text-center lg:text-left">
                 <h1 className="text-2xl font-bold text-text-main">Sign In</h1>
                 <p className="text-text-muted text-xs mt-1">
-                  Access your organization's administrative space
+                  Access your organization&apos;s administrative space
                 </p>
               </div>
 
@@ -241,7 +241,7 @@ export default function LoginPage() {
               </form>
 
               <div className="mt-6 text-center">
-                <span className="text-xs text-text-faint">Don't have an enterprise workspace? </span>
+                <span className="text-xs text-text-faint">Don&apos;t have an enterprise workspace? </span>
                 <Link href="/register" className="text-xs text-primary font-bold hover:underline">
                   Create Workspace
                 </Link>

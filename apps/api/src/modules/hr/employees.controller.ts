@@ -67,7 +67,11 @@ export class EmployeesController {
     @Param('id') id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
   ) {
-    return this.employeesService.update(req.user.tenantId, id, updateEmployeeDto);
+    return this.employeesService.update(
+      req.user.tenantId,
+      id,
+      updateEmployeeDto,
+    );
   }
 
   @Delete(':id')

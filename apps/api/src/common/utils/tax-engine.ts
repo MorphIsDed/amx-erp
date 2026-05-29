@@ -16,9 +16,13 @@ export class TaxEngine {
    * @param rate The total GST rate (default 18)
    * @param isInterState Whether it's Inter-state (IGST) or Intra-state (CGST+SGST)
    */
-  static calculateGST(subTotal: number, rate: number = 18, isInterState: boolean = false): TaxResult {
+  static calculateGST(
+    subTotal: number,
+    rate: number = 18,
+    isInterState: boolean = false,
+  ): TaxResult {
     const totalTax = (subTotal * rate) / 100;
-    
+
     let cgst = 0;
     let sgst = 0;
     let igst = 0;
@@ -37,7 +41,7 @@ export class TaxEngine {
       igst,
       totalTax,
       totalAmount: subTotal + totalTax,
-      rate
+      rate,
     };
   }
 }

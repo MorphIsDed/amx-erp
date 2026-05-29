@@ -11,7 +11,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 export class AnalyticsController {
   constructor(
     private readonly analyticsService: AnalyticsService,
-    private readonly forecastingService: ForecastingService
+    private readonly forecastingService: ForecastingService,
   ) {}
 
   @Get('dashboard/overview')

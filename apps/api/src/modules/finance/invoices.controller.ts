@@ -40,7 +40,11 @@ export class InvoicesController {
     @Query('skip') skip?: number,
     @Query('take') take?: number,
   ) {
-    return this.invoicesService.findAll(req.user.tenantId, { status, skip, take });
+    return this.invoicesService.findAll(req.user.tenantId, {
+      status,
+      skip,
+      take,
+    });
   }
 
   @Get('stats')

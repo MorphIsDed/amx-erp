@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { ConfigService } from '@nestjs/config';
 
@@ -22,7 +22,13 @@ export class IdempotencyService {
   async isIdempotent(key: string, ttl: number = 86400): Promise<boolean> {
     const prefixedKey = `idempotency:${key}`;
     // NX = Set if Not eXists, EX = expire in seconds
-    const result = await this.redisClient.set(prefixedKey, '1', 'EX', ttl, 'NX');
+    const result = await this.redisClient.set(
+      prefixedKey,
+      '1',
+      'EX',
+      ttl,
+      'NX',
+    );
     return result === 'OK';
   }
 }

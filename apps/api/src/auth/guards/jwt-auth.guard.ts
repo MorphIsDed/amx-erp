@@ -19,9 +19,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   handleRequest<TUser = any>(
     err: any,
     user: any,
-    info: any,
-    context: ExecutionContext,
-    status?: any,
+    _info: any,
+    _context: ExecutionContext,
+    _status?: any,
   ): TUser {
     if (err || !user) {
       if (err instanceof Error) {

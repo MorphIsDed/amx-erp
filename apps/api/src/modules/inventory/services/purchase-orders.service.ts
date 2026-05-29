@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PurchaseOrderStatus, StockMovementType } from '@repo/db';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -7,7 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 export class PurchaseOrdersService {
   constructor(
     private prisma: PrismaService,
-    private eventEmitter: EventEmitter2
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(tenantId: string, data: any) {
@@ -26,7 +26,7 @@ export class PurchaseOrdersService {
       },
       include: {
         items: {
-          include: { product: true }
+          include: { product: true },
         },
         vendor: true,
         warehouse: true,
@@ -37,10 +37,14 @@ export class PurchaseOrdersService {
     return po;
   }
 
-  async updateStatus(tenantId: string, id: string, status: PurchaseOrderStatus) {
+  async updateStatus(
+    tenantId: string,
+    id: string,
+    status: PurchaseOrderStatus,
+  ) {
     const po = await this.prisma.purchaseOrder.findUnique({
       where: { id, tenantId },
-      include: { items: true }
+      include: { items: true },
     });
 
     if (!po) throw new NotFoundException('Purchase Order not found');
@@ -48,7 +52,11 @@ export class PurchaseOrdersService {
     const updatedPo = await this.prisma.purchaseOrder.update({
       where: { id },
       data: { status },
-      include: { items: { include: { product: true } }, vendor: true, warehouse: true }
+      include: {
+        items: { include: { product: true } },
+        vendor: true,
+        warehouse: true,
+      },
     });
 
     this.eventEmitter.emit(`purchase-order.${status.toLowerCase()}`, updatedPo);

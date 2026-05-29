@@ -13,9 +13,9 @@ export class InvoicesService {
 
   async create(tenantId: string, dto: CreateInvoiceDto, userId?: string) {
     let subTotal = 0;
-    
+
     // Calculate basic subtotal first
-    dto.items.forEach(item => {
+    dto.items.forEach((item) => {
       subTotal += item.quantity * item.unitPrice;
     });
 
@@ -38,7 +38,7 @@ export class InvoicesService {
         notes: dto.notes,
         tenantId,
         items: {
-          create: dto.items.map(item => ({
+          create: dto.items.map((item) => ({
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -59,13 +59,19 @@ export class InvoicesService {
       entityId: invoice.id,
       tenantId,
       userId,
-      details: { invoiceNumber: invoice.invoiceNumber, total: invoice.totalAmount }
+      details: {
+        invoiceNumber: invoice.invoiceNumber,
+        total: invoice.totalAmount,
+      },
     });
 
     return invoice;
   }
 
-  async findAll(tenantId: string, query: { status?: any; skip?: number; take?: number }) {
+  async findAll(
+    tenantId: string,
+    query: { status?: any; skip?: number; take?: number },
+  ) {
     const { status, skip, take } = query;
     return this.prisma.invoice.findMany({
       where: {
@@ -96,7 +102,12 @@ export class InvoicesService {
     return invoice;
   }
 
-  async updateStatus(tenantId: string, id: string, dto: UpdateInvoiceStatusDto, userId?: string) {
+  async updateStatus(
+    tenantId: string,
+    id: string,
+    dto: UpdateInvoiceStatusDto,
+    userId?: string,
+  ) {
     const invoice = await this.prisma.invoice.update({
       where: { id },
       data: { status: dto.status },
@@ -109,7 +120,7 @@ export class InvoicesService {
       entityId: invoice.id,
       tenantId,
       userId,
-      details: { newStatus: dto.status }
+      details: { newStatus: dto.status },
     });
 
     return invoice;
@@ -135,7 +146,7 @@ export class InvoicesService {
     invoices.forEach((inv) => {
       stats.totalRevenue += inv.totalAmount;
       stats.paid += inv.amountPaid;
-      stats.outstanding += (inv.totalAmount - inv.amountPaid);
+      stats.outstanding += inv.totalAmount - inv.amountPaid;
       if (inv.status === 'DRAFT') stats.draft += 1;
     });
 

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { InventoryService } from '../services/inventory.service';
 import { RecordMovementDto } from '../dto/inventory.dto';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
@@ -27,11 +35,15 @@ export class StockMovementsController {
   @Get()
   @ApiOperation({ summary: 'Get stock movement history (Ledger)' })
   findAll(
-    @Request() req: any, 
+    @Request() req: any,
     @Query('productId') productId?: string,
     @Query('warehouseId') warehouseId?: string,
     @Query('limit') limit?: number,
   ) {
-    return this.inventoryService.getMovements(req.user.tenantId, { productId, warehouseId, limit });
+    return this.inventoryService.getMovements(req.user.tenantId, {
+      productId,
+      warehouseId,
+      limit,
+    });
   }
 }

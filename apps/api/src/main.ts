@@ -10,17 +10,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security Headers
-  app.use(helmet({
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: [`'self'`],
-        styleSrc: [`'self'`, `'unsafe-inline'`],
-        imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
-        scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+          scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+        },
       },
-    },
-  }));
+    }),
+  );
 
   // Performance - Compression
   app.use(compression());
@@ -52,7 +54,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  
+
   console.log('--------------------------------------------------');
   console.log(`🚀 AMX-ERP Backend Sorted & Operational`);
   console.log(`🌍 Endpoint: http://localhost:${port}`);

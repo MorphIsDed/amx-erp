@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Sse } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Param,
+  Sse,
+} from '@nestjs/common';
 import { InventoryService } from '../services/inventory.service';
 import { CreateProductDto } from '../dto/inventory.dto';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
@@ -39,7 +48,7 @@ export class ProductsController {
   stream(@Request() req: any) {
     return this.inventoryService.getStockStream().pipe(
       filter((data: any) => data.tenantId === req.user.tenantId),
-      map((data: any) => ({ data: data.payload }))
+      map((data: any) => ({ data: data.payload })),
     );
   }
 }

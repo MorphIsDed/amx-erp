@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { PurchaseOrdersService } from '../services/purchase-orders.service';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
@@ -30,9 +39,9 @@ export class PurchaseOrdersController {
   @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Update purchase order status' })
   updateStatus(
-    @Request() req: any, 
-    @Param('id') id: string, 
-    @Body('status') status: PurchaseOrderStatus
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body('status') status: PurchaseOrderStatus,
   ) {
     return this.poService.updateStatus(req.user.tenantId, id, status);
   }

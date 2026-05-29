@@ -15,26 +15,31 @@ export class EmployeesService {
     });
   }
 
-  async findAll(tenantId: string, query: {
-    skip?: number;
-    take?: number;
-    search?: string;
-    departmentId?: string;
-    status?: any;
-  }) {
+  async findAll(
+    tenantId: string,
+    query: {
+      skip?: number;
+      take?: number;
+      search?: string;
+      departmentId?: string;
+      status?: any;
+    },
+  ) {
     const { skip, take, search, departmentId, status } = query;
-    
+
     return this.prisma.employee.findMany({
       where: {
         tenantId,
         departmentId,
         status,
-        OR: search ? [
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-          { employeeId: { contains: search, mode: 'insensitive' } },
-        ] : undefined,
+        OR: search
+          ? [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+              { employeeId: { contains: search, mode: 'insensitive' } },
+            ]
+          : undefined,
       },
       skip: skip ? Number(skip) : undefined,
       take: take ? Number(take) : undefined,
@@ -57,7 +62,11 @@ export class EmployeesService {
     return employee;
   }
 
-  async update(tenantId: string, id: string, updateEmployeeDto: UpdateEmployeeDto) {
+  async update(
+    tenantId: string,
+    id: string,
+    updateEmployeeDto: UpdateEmployeeDto,
+  ) {
     return this.prisma.employee.updateMany({
       where: { id, tenantId },
       data: updateEmployeeDto,

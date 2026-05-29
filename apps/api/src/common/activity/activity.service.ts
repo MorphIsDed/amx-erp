@@ -16,7 +16,7 @@ export interface ActivityLogOptions {
 export class ActivityService {
   constructor(
     private prisma: PrismaService,
-    private eventEmitter: EventEmitter2
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async log(options: ActivityLogOptions) {
@@ -31,12 +31,15 @@ export class ActivityService {
           tenantId: options.tenantId,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       });
-      
-      this.eventEmitter.emit('activity.logged', { tenantId: options.tenantId, activity });
-      
+
+      this.eventEmitter.emit('activity.logged', {
+        tenantId: options.tenantId,
+        activity,
+      });
+
       return activity;
     } catch (error) {
       console.error('Failed to log activity:', error);

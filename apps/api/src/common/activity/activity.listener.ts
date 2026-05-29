@@ -12,10 +12,18 @@ export class ActivityListener {
   ) {}
 
   @OnEvent('**', { async: true })
-  @Idempotent((payload: any, event: string) => payload?.id ? `audit-${event}-${payload.id}` : '')
+  @Idempotent((payload: any, event: string) =>
+    payload?.id ? `audit-${event}-${payload.id}` : '',
+  )
   async handleAllEvents(payload: any, event: string) {
     // Only log events that have tenantId and meet a certain pattern
-    if (payload?.tenantId && (event.includes('.created') || event.includes('.updated') || event.includes('.deleted') || event.includes('.paid'))) {
+    if (
+      payload?.tenantId &&
+      (event.includes('.created') ||
+        event.includes('.updated') ||
+        event.includes('.deleted') ||
+        event.includes('.paid'))
+    ) {
       await this.activityService.log({
         action: event.toUpperCase().replace('.', '_'),
         entityType: event.split('.')[0].toUpperCase(),
