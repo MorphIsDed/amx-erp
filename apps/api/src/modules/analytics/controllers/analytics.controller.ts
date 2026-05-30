@@ -55,4 +55,28 @@ export class AnalyticsController {
   getInventoryInsights(@Request() req: any) {
     return this.forecastingService.getInventoryForecast(req.user.tenantId);
   }
+
+  @Get('projects')
+  @ApiOperation({ summary: 'Get projects overview metrics' })
+  getProjectsAnalytics(@Request() req: any) {
+    return this.analyticsService.getProjectsAnalytics(req.user.tenantId);
+  }
+
+  @Get('project-progress')
+  @ApiOperation({ summary: 'Get progress analytics for all active projects' })
+  getProjectProgress(@Request() req: any) {
+    return this.analyticsService.getProjectProgressAnalytics(req.user.tenantId);
+  }
+
+  @Get('project-budget')
+  @ApiOperation({ summary: 'Get budget analytics for all projects' })
+  getProjectBudget(@Request() req: any) {
+    return this.analyticsService.getProjectBudgetAnalytics(req.user.tenantId);
+  }
+
+  @Get('resource-utilization')
+  @ApiOperation({ summary: 'Get active resource allocation and utilization metrics' })
+  getResourceUtilization(@Request() req: any) {
+    return this.analyticsService.getResourceUtilizationAnalytics(req.user.tenantId);
+  }
 }

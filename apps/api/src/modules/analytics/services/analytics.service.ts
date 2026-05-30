@@ -7,7 +7,7 @@ export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
   async getDashboardOverview(tenantId: string) {
-    const [revenueData, inventoryData, employeeCount, recentActivity] =
+    const [revenueData, inventoryData, employeeCount, recentActivity, activeProjectsCount] =
       await Promise.all([
         this.prisma.invoice.aggregate({
           where: { tenantId, status: 'PAID' },
@@ -24,6 +24,9 @@ export class AnalyticsService {
           take: 5,
           orderBy: { createdAt: 'desc' },
           include: { user: { select: { name: true } } },
+        }),
+        this.prisma.project.count({
+          where: { tenantId, deletedAt: null, status: 'ACTIVE' },
         }),
       ]);
 
@@ -46,6 +49,7 @@ export class AnalyticsService {
         activeSourcing: inventoryData,
         headcount: employeeCount,
         growth: 12.5,
+        activeProjects: activeProjectsCount,
       },
       revenueTrend: this.formatMonthlyTrend(monthlyRevenue),
       recentActivity,
@@ -276,5 +280,151 @@ export class AnalyticsService {
     });
 
     return trend;
+  }
+
+  // --- Project Management Analytics ---
+  async getProjectsAnalytics(tenantId: string) {
+    const [projects, activeCount, completedCount, overdueTasksCount, upcomingMilestonesCount] = await Promise.all([
+      this.prisma.project.findMany({
+        where: { tenantId, deletedAt: null },
+      }),
+      this.prisma.project.count({
+        where: { tenantId, deletedAt: null, status: 'ACTIVE' },
+      }),
+      this.prisma.project.count({
+        where: { tenantId, deletedAt: null, status: 'COMPLETED' },
+      }),
+      this.prisma.task.count({
+        where: {
+          tenantId,
+          status: { not: 'DONE' },
+          dueDate: { lt: new Date() },
+        },
+      }),
+      this.prisma.milestone.count({
+        where: {
+          tenantId,
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+          dueDate: { gte: new Date() },
+        },
+      }),
+    ]);
+
+    return {
+      totalProjects: projects.length,
+      activeProjects: activeCount,
+      completedProjects: completedCount,
+      overdueTasks: overdueTasksCount,
+      upcomingMilestones: upcomingMilestonesCount,
+      distribution: {
+        active: activeCount,
+        completed: completedCount,
+        onHold: projects.filter((p) => p.status === 'ON_HOLD').length,
+        draft: projects.filter((p) => p.status === 'DRAFT').length,
+        cancelled: projects.filter((p) => p.status === 'CANCELLED').length,
+      },
+    };
+  }
+
+  async getProjectProgressAnalytics(tenantId: string) {
+    const projects = await this.prisma.project.findMany({
+      where: { tenantId, deletedAt: null, status: 'ACTIVE' },
+      include: {
+        tasks: true,
+        milestones: true,
+      },
+    });
+
+    return projects.map((p) => {
+      const totalTasks = p.tasks.length;
+      const completedTasks = p.tasks.filter((t) => t.status === 'DONE').length;
+      const progressPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+      const totalMilestones = p.milestones.length;
+      const completedMilestones = p.milestones.filter((m) => m.status === 'COMPLETED').length;
+      const milestonesProgress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
+
+      const taskStatusDist = {
+        todo: p.tasks.filter((t) => t.status === 'TODO').length,
+        inProgress: p.tasks.filter((t) => t.status === 'IN_PROGRESS').length,
+        review: p.tasks.filter((t) => t.status === 'REVIEW').length,
+        blocked: p.tasks.filter((t) => t.status === 'BLOCKED').length,
+        done: completedTasks,
+      };
+
+      return {
+        projectId: p.id,
+        name: p.name,
+        projectCode: p.projectCode,
+        taskProgressPercentage: progressPercent,
+        milestoneProgressPercentage: milestonesProgress,
+        totalTasks,
+        completedTasks,
+        taskStatusDistribution: taskStatusDist,
+      };
+    });
+  }
+
+  async getProjectBudgetAnalytics(tenantId: string) {
+    const projects = await this.prisma.project.findMany({
+      where: { tenantId, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        projectCode: true,
+        plannedBudget: true,
+        actualBudget: true,
+        status: true,
+      },
+    });
+
+    return projects.map((p) => {
+      const variance = p.plannedBudget - p.actualBudget;
+      const percentageUsed = p.plannedBudget > 0 ? (p.actualBudget / p.plannedBudget) * 100 : 0;
+      return {
+        projectId: p.id,
+        name: p.name,
+        projectCode: p.projectCode,
+        plannedBudget: p.plannedBudget,
+        actualBudget: p.actualBudget,
+        variance,
+        percentageUsed,
+        status: p.status,
+      };
+    });
+  }
+
+  async getResourceUtilizationAnalytics(tenantId: string) {
+    const employees = await this.prisma.employee.findMany({
+      where: { tenantId, status: 'ACTIVE' },
+      include: {
+        projectMembers: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
+
+    return employees.map((emp) => {
+      const activeMemberships = emp.projectMembers.filter(
+        (m) =>
+          m.project.deletedAt === null &&
+          !['COMPLETED', 'CANCELLED'].includes(m.project.status),
+      );
+      const totalAllocation = activeMemberships.reduce((sum, m) => sum + m.allocationPercentage, 0);
+
+      return {
+        employeeId: emp.id,
+        employeeName: `${emp.firstName} ${emp.lastName}`,
+        totalAllocationPercentage: totalAllocation,
+        projectsCount: activeMemberships.length,
+        allocations: activeMemberships.map((m) => ({
+          projectId: m.projectId,
+          projectName: m.project.name,
+          allocationPercentage: m.allocationPercentage,
+        })),
+      };
+    });
   }
 }

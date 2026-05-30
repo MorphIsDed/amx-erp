@@ -10,11 +10,17 @@ import {
   ArrowDownRight,
   Activity,
   Sparkles,
+  Briefcase,
+  Layers,
+  Clock,
+  ListTodo,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActivityTimeline } from "@/components/dashboard/activity-timeline";
 import { useEffect, useState } from "react";
 import { API_ENDPOINTS } from "@/lib/api-config";
+import Link from "next/link";
 
 const container = {
   hidden: { opacity: 0 },
@@ -35,21 +41,32 @@ const item = {
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
+  const [projectsData, setProjectsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOverview = async () => {
       try {
-        const res = await fetch(API_ENDPOINTS.DASHBOARD_OVERVIEW, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
-        const json = await res.json();
-        setData(json);
+        const [overviewRes, projectsRes] = await Promise.all([
+          fetch(API_ENDPOINTS.DASHBOARD_OVERVIEW, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+          }),
+          fetch("http://localhost:3001/api/analytics/projects", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+          }),
+        ]);
+
+        if (overviewRes.ok) {
+          const overviewJson = await overviewRes.json();
+          setData(overviewJson);
+        }
+
+        if (projectsRes.ok) {
+          const projectsJson = await projectsRes.json();
+          setProjectsData(projectsJson.data);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -68,7 +85,7 @@ export default function DashboardPage() {
       variants={container}
       initial="hidden"
       animate="show"
-      className="space-y-8 max-w-7xl mx-auto"
+      className="space-y-8 max-w-7xl mx-auto pb-12"
     >
       {/* HEADER */}
       <motion.div
@@ -120,6 +137,15 @@ export default function DashboardPage() {
           accentTo="to-accent"
         />
         <StatWidget
+          title="Active Projects"
+          value={data?.stats?.activeProjects?.toLocaleString() || "0"}
+          change="Operational"
+          trend="neutral"
+          icon={Briefcase}
+          accentFrom="from-primary"
+          accentTo="to-success"
+        />
+        <StatWidget
           title="Inventory Items"
           value={data?.stats?.activeSourcing?.toLocaleString()}
           change="+0"
@@ -128,15 +154,6 @@ export default function DashboardPage() {
           accentFrom="from-warning"
           accentTo="to-rose"
         />
-        <StatWidget
-          title="System Health"
-          value="99.9%"
-          change="Optimal"
-          trend="neutral"
-          icon={Activity}
-          accentFrom="from-primary"
-          accentTo="to-success"
-        />
       </motion.div>
 
       {/* CHARTS / MAIN CONTENT */}
@@ -144,7 +161,7 @@ export default function DashboardPage() {
         variants={item}
         className="grid grid-cols-1 lg:grid-cols-3 gap-6"
       >
-        <Card variant="glass" className="lg:col-span-2 overflow-hidden">
+        <Card variant="glass" className="lg:col-span-2 overflow-hidden border-border/20 shadow-md">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
@@ -154,7 +171,7 @@ export default function DashboardPage() {
               Monthly revenue distribution
             </p>
           </CardHeader>
-          <CardContent className="h-[400px] flex items-end justify-between px-6 pb-8 border-t border-border/20">
+          <CardContent className="h-[400px] flex items-end justify-between px-6 pb-8 border-t border-border/20 bg-card/5">
             {/* Real monthly revenue trend */}
             {data?.revenueTrend?.map(
               (item: any, i: number) => {
@@ -194,7 +211,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card variant="default" className="overflow-hidden">
+        <Card variant="default" className="overflow-hidden border border-border/20 shadow-md">
           <CardHeader className="border-b border-border/20">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-primary" />
@@ -209,6 +226,116 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* PROJECTS LIVE INSIGHTS SECTION */}
+      {projectsData && (
+        <motion.div
+          variants={item}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8"
+        >
+          {/* Projects Roadmap Health Card */}
+          <Card variant="glass" className="lg:col-span-2 border border-border/20 shadow-md p-6 space-y-6">
+            <div className="flex justify-between items-center border-b border-border/10 pb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4.5 h-4.5 text-primary" />
+                <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Project Portfolio Metrics</h3>
+              </div>
+              <span className="text-[10px] font-bold text-text-faint font-mono bg-surface border border-border/20 px-2.5 py-0.5 rounded-full">
+                Live Roadmap
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-surface/30 p-4 border border-border/15 rounded-xl text-center space-y-1">
+                <p className="text-[10px] font-bold text-text-faint uppercase tracking-wider">Overdue Tasks</p>
+                <div className="flex justify-center items-center gap-1.5 text-danger font-mono font-bold text-lg">
+                  <Clock className="w-4 h-4 text-danger animate-pulse" />
+                  {projectsData.overdueTasks || "0"}
+                </div>
+              </div>
+
+              <div className="bg-surface/30 p-4 border border-border/15 rounded-xl text-center space-y-1">
+                <p className="text-[10px] font-bold text-text-faint uppercase tracking-wider">Upcoming Milestones</p>
+                <div className="flex justify-center items-center gap-1.5 text-info font-mono font-bold text-lg">
+                  <ListTodo className="w-4 h-4 text-info" />
+                  {projectsData.upcomingMilestones || "0"}
+                </div>
+              </div>
+
+              <div className="bg-surface/30 p-4 border border-border/15 rounded-xl text-center space-y-1">
+                <p className="text-[10px] font-bold text-text-faint uppercase tracking-wider">Completed Projects</p>
+                <div className="flex justify-center items-center gap-1.5 text-success font-mono font-bold text-lg">
+                  <CheckCircle2 className="w-4 h-4 text-success" />
+                  {projectsData.completedProjects || "0"}
+                </div>
+              </div>
+            </div>
+
+            {/* Distribution metrics */}
+            <div className="pt-2">
+              <h4 className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-3">Portfolio Status Distribution</h4>
+              <div className="grid grid-cols-5 gap-3 font-mono text-[10px] text-center font-bold">
+                <div className="p-2 border border-border/10 rounded-lg bg-surface/20">
+                  <span className="text-primary block text-xs">{projectsData.distribution?.active || 0}</span>
+                  <span className="text-text-faint font-sans font-semibold">Active</span>
+                </div>
+                <div className="p-2 border border-border/10 rounded-lg bg-surface/20">
+                  <span className="text-success block text-xs">{projectsData.distribution?.completed || 0}</span>
+                  <span className="text-text-faint font-sans font-semibold">Completed</span>
+                </div>
+                <div className="p-2 border border-border/10 rounded-lg bg-surface/20">
+                  <span className="text-warning block text-xs">{projectsData.distribution?.onHold || 0}</span>
+                  <span className="text-text-faint font-sans font-semibold">On Hold</span>
+                </div>
+                <div className="p-2 border border-border/10 rounded-lg bg-surface/20">
+                  <span className="text-text-muted block text-xs">{projectsData.distribution?.draft || 0}</span>
+                  <span className="text-text-faint font-sans font-semibold">Draft</span>
+                </div>
+                <div className="p-2 border border-border/10 rounded-lg bg-surface/20">
+                  <span className="text-danger block text-xs">{projectsData.distribution?.cancelled || 0}</span>
+                  <span className="text-text-faint font-sans font-semibold">Cancelled</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Mini Portfolio summary */}
+          <Card variant="default" className="border border-border/20 shadow-md p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 border-b border-border/10 pb-3 mb-4">
+                <Sparkles className="w-4.5 h-4.5 text-primary" />
+                <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Workspace Summary</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-text-muted">Active Sprints</span>
+                  <span className="font-bold text-text-main font-mono">{projectsData.activeProjects || "0"} Active</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-text-muted">Total Accounts</span>
+                  <span className="font-bold text-text-main font-mono">{projectsData.totalProjects || "0"} Projects</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-text-muted">Task Slippage</span>
+                  <span className={cn(
+                    "font-bold font-mono",
+                    projectsData.overdueTasks > 0 ? "text-danger" : "text-success"
+                  )}>
+                    {projectsData.overdueTasks > 0 ? "Critical" : "Optimal"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 bg-surface/30 p-4 border border-border/15 rounded-2xl">
+              <p className="text-[10px] text-text-faint leading-relaxed font-sans">
+                Review effort allocation and budget variances by drilling down into individual projects from the operational <Link href="/projects" className="text-primary hover:underline font-bold">Projects tab</Link>.
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

@@ -117,6 +117,9 @@ model Tenant {
   journalEntries      JournalEntry[]
   accountingPeriods   AccountingPeriod[]
   leaves              Leave[]
+  projects            Project[]
+  milestones          Milestone[]
+  tasks               Task[]
 }
 
 model User {
@@ -177,6 +180,8 @@ model Employee {
 
   payslips Payslip[]
   leaves   Leave[]
+  tasks    Task[]
+  projectMembers ProjectMember[]
 
   baseSalary Float @default(0.0)
   allowances Float @default(0.0)
@@ -601,3 +606,113 @@ model Leave {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  BLOCKED
+}
+
+model Project {
+  id            String        @id @default(uuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  projectCode   String
+  name          String
+  description   String?
+  status        ProjectStatus @default(DRAFT)
+  startDate     DateTime
+  endDate       DateTime
+  plannedBudget Float
+  actualBudget  Float         @default(0.0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  milestones    Milestone[]
+  tasks         Task[]
+  members       ProjectMember[]
+
+  @@unique([tenantId, projectCode])
+}
+
+model Milestone {
+  id          String          @id @default(uuid())
+  tenantId    String
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  dueDate     DateTime
+  completedAt DateTime?
+  status      MilestoneStatus @default(PENDING)
+
+  tasks       Task[]
+}
+
+model Task {
+  id                 String       @id @default(uuid())
+  tenantId           String
+  tenant             Tenant       @relation(fields: [tenantId], references: [id])
+  projectId          String
+  project            Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestoneId        String?
+  milestone          Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  assignedEmployeeId String?
+  assignedEmployee   Employee?    @relation(fields: [assignedEmployeeId], references: [id], onDelete: SetNull)
+  title              String
+  description        String?
+  priority           TaskPriority @default(MEDIUM)
+  status             TaskStatus   @default(TODO)
+  estimatedHours     Float        @default(0.0)
+  actualHours        Float        @default(0.0)
+  dueDate            DateTime
+
+  dependencies       TaskDependency[] @relation("predecessor")
+  dependents         TaskDependency[] @relation("successor")
+}
+
+model ProjectMember {
+  projectId            String
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId           String
+  employee             Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  allocationPercentage Float
+
+  @@id([projectId, employeeId])
+}
+
+model TaskDependency {
+  predecessorTaskId String
+  predecessor       Task   @relation("predecessor", fields: [predecessorTaskId], references: [id], onDelete: Cascade)
+  successorTaskId   String
+  successor         Task   @relation("successor", fields: [successorTaskId], references: [id], onDelete: Cascade)
+
+  @@id([predecessorTaskId, successorTaskId])
+}
+

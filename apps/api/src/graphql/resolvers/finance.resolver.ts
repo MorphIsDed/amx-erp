@@ -17,11 +17,13 @@ export class FinanceResolver {
     @Args('take', { type: () => Int, nullable: true }) take?: number,
     @Args('status', { nullable: true }) status?: string,
   ) {
-    return this.invoicesService.findAll(user.tenantId, { skip, take, status });
+    const result = await this.invoicesService.findAll(user.tenantId, { skip, take, status });
+    return result.data;
   }
 
   @Query(() => InvoiceModel)
   async invoice(@CurrentUser() user: any, @Args('id') id: string) {
-    return this.invoicesService.findOne(user.tenantId, id);
+    const result = await this.invoicesService.findOne(user.tenantId, id);
+    return result.data;
   }
 }

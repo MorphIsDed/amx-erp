@@ -2,6 +2,7 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { OfflineSyncProvider } from "@/components/providers/offline-provider";
 
 export const metadata = {
   title: "AMX ERP — Enterprise Operating System",
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           disableTransitionOnChange
         >
           <QueryProvider>
-            {children}
+            <OfflineSyncProvider>
+              {children}
+            </OfflineSyncProvider>
           </QueryProvider>
           <script
             dangerouslySetInnerHTML={{

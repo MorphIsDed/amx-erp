@@ -26,7 +26,7 @@ export class AuditInterceptor implements NestInterceptor {
 
     const pathSegments = url.split('/');
     const resource = pathSegments.find((seg: string) =>
-      ['invoices', 'employees', 'products', 'purchase-orders', 'accounts', 'leaves', 'payroll'].includes(seg)
+      ['invoices', 'employees', 'products', 'purchase-orders', 'accounts', 'leaves', 'payroll', 'projects', 'milestones', 'tasks'].includes(seg)
     );
 
     if (resource) {
