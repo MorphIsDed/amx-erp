@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,7 +12,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class AuditInterceptor implements NestInterceptor {
   constructor(private prisma: PrismaService) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
     const { method, url, user, body, params } = request;
 
@@ -21,12 +29,23 @@ export class AuditInterceptor implements NestInterceptor {
     if (!tenantId) return next.handle();
 
     let entityType = '';
-    let entityId = params?.id || body?.id || '';
+    const entityId = params?.id || body?.id || '';
     let previousValues: any = null;
 
     const pathSegments = url.split('/');
     const resource = pathSegments.find((seg: string) =>
-      ['invoices', 'employees', 'products', 'purchase-orders', 'accounts', 'leaves', 'payroll', 'projects', 'milestones', 'tasks'].includes(seg)
+      [
+        'invoices',
+        'employees',
+        'products',
+        'purchase-orders',
+        'accounts',
+        'leaves',
+        'payroll',
+        'projects',
+        'milestones',
+        'tasks',
+      ].includes(seg),
     );
 
     if (resource) {
@@ -44,21 +63,23 @@ export class AuditInterceptor implements NestInterceptor {
 
           const delegate = (this.prisma as any)[dbName];
           if (delegate) {
-            previousValues = await delegate.findFirst({ where: { id: entityId, tenantId } });
+            previousValues = await delegate.findFirst({
+              where: { id: entityId, tenantId },
+            });
           }
-        } catch (e) {
+        } catch {
           // Ignore
         }
       }
     }
 
     return next.handle().pipe(
-      tap(async (response) => {
-        try {
-          const finalEntityId = entityId || response?.id || '';
-          const action = `${method}_${entityType || 'UNKNOWN'}`;
+      tap((response) => {
+        const finalEntityId = entityId || response?.id || '';
+        const action = `${method}_${entityType || 'UNKNOWN'}`;
 
-          await this.prisma.activityLog.create({
+        this.prisma.activityLog
+          .create({
             data: {
               action,
               entityType: entityType || 'SYSTEM',
@@ -72,10 +93,10 @@ export class AuditInterceptor implements NestInterceptor {
                 newValues: body || {},
               },
             },
+          })
+          .catch((err) => {
+            console.error('Failed to log audit activity:', err);
           });
-        } catch (err) {
-          console.error('Failed to log audit activity:', err);
-        }
       }),
     );
   }

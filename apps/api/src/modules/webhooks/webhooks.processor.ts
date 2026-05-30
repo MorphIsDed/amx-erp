@@ -9,7 +9,9 @@ export class WebhooksProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const { subscriptionId, url, secret, eventType, payload } = job.data;
-    this.logger.log(`Processing webhook dispatch job ${job.id} for subscription ${subscriptionId}`);
+    this.logger.log(
+      `Processing webhook dispatch job ${job.id} for subscription ${subscriptionId}`,
+    );
 
     const timestamp = Math.floor(Date.now() / 1000);
     const bodyString = JSON.stringify({
@@ -43,14 +45,20 @@ export class WebhooksProcessor extends WorkerHost {
         throw new Error(`Receiver returned status code: ${response.status}`);
       }
 
-      this.logger.log(`Webhook dispatch job ${job.id} succeeded with status ${response.status}`);
+      this.logger.log(
+        `Webhook dispatch job ${job.id} succeeded with status ${response.status}`,
+      );
       return { success: true, status: response.status };
     } catch (error) {
-      this.logger.error(`Webhook dispatch job ${job.id} failed: ${error.message}`);
-      
+      this.logger.error(
+        `Webhook dispatch job ${job.id} failed: ${error.message}`,
+      );
+
       // If this was the last attempt, log to DLQ
       if (job.attemptsMade + 1 >= (job.opts.attempts || 3)) {
-        this.logger.error(`Webhook subscription ${subscriptionId} reached max retry limit. Routing to DLQ.`);
+        this.logger.error(
+          `Webhook subscription ${subscriptionId} reached max retry limit. Routing to DLQ.`,
+        );
       }
 
       throw error; // Re-throw to trigger BullMQ's automatic retry backoffs

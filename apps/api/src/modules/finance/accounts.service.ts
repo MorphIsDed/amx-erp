@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CrudService } from '../../common/services/crud.service';
 import { Account } from '@repo/db';
@@ -10,12 +14,17 @@ export class AccountsService extends CrudService<Account> {
     super(prisma.account);
   }
 
-  async createAccount(tenantId: string, dto: CreateAccountDto): Promise<Account> {
+  async createAccount(
+    tenantId: string,
+    dto: CreateAccountDto,
+  ): Promise<Account> {
     const existing = await this.prisma.account.findFirst({
       where: { tenantId, code: dto.code },
     });
     if (existing) {
-      throw new ConflictException(`Account with code ${dto.code} already exists for this tenant.`);
+      throw new ConflictException(
+        `Account with code ${dto.code} already exists for this tenant.`,
+      );
     }
 
     return this.prisma.account.create({
@@ -44,7 +53,9 @@ export class AccountsService extends CrudService<Account> {
     }
 
     if (account._count.journalLines > 0) {
-      throw new ConflictException(`Cannot delete account ${account.code} because it has existing transactions.`);
+      throw new ConflictException(
+        `Cannot delete account ${account.code} because it has existing transactions.`,
+      );
     }
 
     await this.prisma.account.delete({

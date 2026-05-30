@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AnalyticsService } from '../services/analytics.service';
 import { ForecastingService } from '../services/forecasting.service';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
@@ -39,7 +46,9 @@ export class AnalyticsController {
   }
 
   @Get('inventory-charts')
-  @ApiOperation({ summary: 'Get stock movement and product distribution levels' })
+  @ApiOperation({
+    summary: 'Get stock movement and product distribution levels',
+  })
   getInventoryCharts(@Request() req: any) {
     return this.analyticsService.getInventoryCharts(req.user.tenantId);
   }
@@ -75,8 +84,31 @@ export class AnalyticsController {
   }
 
   @Get('resource-utilization')
-  @ApiOperation({ summary: 'Get active resource allocation and utilization metrics' })
+  @ApiOperation({
+    summary: 'Get active resource allocation and utilization metrics',
+  })
   getResourceUtilization(@Request() req: any) {
-    return this.analyticsService.getResourceUtilizationAnalytics(req.user.tenantId);
+    return this.analyticsService.getResourceUtilizationAnalytics(
+      req.user.tenantId,
+    );
+  }
+
+  @Get('dashboard/layout')
+  @ApiOperation({ summary: 'Get current user customized dashboard layout' })
+  getDashboardLayout(@Request() req: any) {
+    return this.analyticsService.getDashboardLayout(
+      req.user.id,
+      req.user.tenantId,
+    );
+  }
+
+  @Post('dashboard/layout/save')
+  @ApiOperation({ summary: 'Save customized dashboard layout' })
+  saveDashboardLayout(@Request() req: any, @Body() body: { layout: any }) {
+    return this.analyticsService.saveDashboardLayout(
+      req.user.id,
+      req.user.tenantId,
+      body.layout,
+    );
   }
 }

@@ -1,34 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { StockMovementType, InvoiceStatus, PurchaseOrderStatus, PayrollStatus, LeaveStatus } from '@repo/db';
+import {
+  StockMovementType,
+  InvoiceStatus,
+  PurchaseOrderStatus,
+  LeaveStatus,
+} from '@repo/db';
 
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
   async getDashboardOverview(tenantId: string) {
-    const [revenueData, inventoryData, employeeCount, recentActivity, activeProjectsCount] =
-      await Promise.all([
-        this.prisma.invoice.aggregate({
-          where: { tenantId, status: 'PAID' },
-          _sum: { totalAmount: true },
-        }),
-        this.prisma.product.count({
-          where: { tenantId },
-        }),
-        this.prisma.employee.count({
-          where: { tenantId, status: 'ACTIVE' },
-        }),
-        this.prisma.activityLog.findMany({
-          where: { tenantId },
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-          include: { user: { select: { name: true } } },
-        }),
-        this.prisma.project.count({
-          where: { tenantId, deletedAt: null, status: 'ACTIVE' },
-        }),
-      ]);
+    const [
+      revenueData,
+      inventoryData,
+      employeeCount,
+      recentActivity,
+      activeProjectsCount,
+    ] = await Promise.all([
+      this.prisma.invoice.aggregate({
+        where: { tenantId, status: 'PAID' },
+        _sum: { totalAmount: true },
+      }),
+      this.prisma.product.count({
+        where: { tenantId },
+      }),
+      this.prisma.employee.count({
+        where: { tenantId, status: 'ACTIVE' },
+      }),
+      this.prisma.activityLog.findMany({
+        where: { tenantId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { name: true } } },
+      }),
+      this.prisma.project.count({
+        where: { tenantId, deletedAt: null, status: 'ACTIVE' },
+      }),
+    ]);
 
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -58,34 +68,36 @@ export class AnalyticsService {
 
   // --- Dashboard Summary ---
   async getDashboardSummary(tenantId: string) {
-    const [paidInvoices, allExpenses, employeeCount, products, lowStockProducts, pendingInvoices, pendingPOs] =
-      await Promise.all([
-        this.prisma.invoice.aggregate({
-          where: { tenantId, status: InvoiceStatus.PAID },
-          _sum: { totalAmount: true },
-        }),
-        this.prisma.transaction.aggregate({
-          where: { tenantId, type: 'EXPENSE' },
-          _sum: { amount: true },
-        }),
-        this.prisma.employee.count({
-          where: { tenantId, status: 'ACTIVE' },
-        }),
-        this.prisma.product.findMany({
-          where: { tenantId },
-          include: { stockMovements: true },
-        }),
-        this.prisma.product.findMany({
-          where: { tenantId },
-          include: { stockMovements: true },
-        }),
-        this.prisma.invoice.count({
-          where: { tenantId, status: InvoiceStatus.DRAFT },
-        }),
-        this.prisma.purchaseOrder.count({
-          where: { tenantId, status: PurchaseOrderStatus.PENDING_APPROVAL },
-        }),
-      ]);
+    const [
+      paidInvoices,
+      allExpenses,
+      employeeCount,
+      products,
+      pendingInvoices,
+      pendingPOs,
+    ] = await Promise.all([
+      this.prisma.invoice.aggregate({
+        where: { tenantId, status: InvoiceStatus.PAID },
+        _sum: { totalAmount: true },
+      }),
+      this.prisma.transaction.aggregate({
+        where: { tenantId, type: 'EXPENSE' },
+        _sum: { amount: true },
+      }),
+      this.prisma.employee.count({
+        where: { tenantId, status: 'ACTIVE' },
+      }),
+      this.prisma.product.findMany({
+        where: { tenantId },
+        include: { stockMovements: true },
+      }),
+      this.prisma.invoice.count({
+        where: { tenantId, status: InvoiceStatus.DRAFT },
+      }),
+      this.prisma.purchaseOrder.count({
+        where: { tenantId, status: PurchaseOrderStatus.PENDING_APPROVAL },
+      }),
+    ]);
 
     // Calculate total stock value and low stock count
     let inventoryValue = 0;
@@ -94,7 +106,8 @@ export class AnalyticsService {
     products.forEach((p) => {
       const stockLevel = p.stockMovements.reduce((acc, curr) => {
         const change =
-          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+          curr.type === StockMovementType.IN ||
+          curr.type === StockMovementType.ADJUSTMENT
             ? curr.quantity
             : -curr.quantity;
         return acc + change;
@@ -108,7 +121,8 @@ export class AnalyticsService {
     return {
       revenue: paidInvoices._sum.totalAmount || 0,
       expenses: allExpenses._sum.amount || 0,
-      profit: (paidInvoices._sum.totalAmount || 0) - (allExpenses._sum.amount || 0),
+      profit:
+        (paidInvoices._sum.totalAmount || 0) - (allExpenses._sum.amount || 0),
       employees: employeeCount,
       inventoryValue,
       lowStockItems: lowStockCount,
@@ -130,7 +144,20 @@ export class AnalyticsService {
       }),
     ]);
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const revenueTrend = months.map((m) => ({ month: m, amount: 0 }));
     const expenseTrend = months.map((m) => ({ month: m, amount: 0 }));
     const monthlyProfit = months.map((m) => ({ month: m, profit: 0 }));
@@ -169,7 +196,20 @@ export class AnalyticsService {
       }),
     ]);
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const employeeGrowth = months.map((m) => ({ month: m, count: 0 }));
 
     employees.forEach((emp) => {
@@ -197,7 +237,10 @@ export class AnalyticsService {
 
     return {
       employeeGrowth,
-      departmentDistribution: Object.keys(deptDist).map((name) => ({ department: name, count: deptDist[name] })),
+      departmentDistribution: Object.keys(deptDist).map((name) => ({
+        department: name,
+        count: deptDist[name],
+      })),
       leaveStatistics: leaveDist,
     };
   }
@@ -219,8 +262,25 @@ export class AnalyticsService {
       }),
     ]);
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const stockMovementTrend = months.map((m) => ({ month: m, ins: 0, outs: 0 }));
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const stockMovementTrend = months.map((m) => ({
+      month: m,
+      ins: 0,
+      outs: 0,
+    }));
 
     movements.forEach((m) => {
       const monthIdx = new Date(m.createdAt).getMonth();
@@ -237,7 +297,8 @@ export class AnalyticsService {
     products.forEach((p) => {
       const stockLevel = p.stockMovements.reduce((acc, curr) => {
         const change =
-          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+          curr.type === StockMovementType.IN ||
+          curr.type === StockMovementType.ADJUSTMENT
             ? curr.quantity
             : -curr.quantity;
         return acc + change;
@@ -252,7 +313,8 @@ export class AnalyticsService {
     const warehouseDist = warehouses.map((w) => {
       const level = w.stockMovements.reduce((acc, curr) => {
         const change =
-          curr.type === StockMovementType.IN || curr.type === StockMovementType.ADJUSTMENT
+          curr.type === StockMovementType.IN ||
+          curr.type === StockMovementType.ADJUSTMENT
             ? curr.quantity
             : -curr.quantity;
         return acc + change;
@@ -271,7 +333,20 @@ export class AnalyticsService {
   }
 
   private formatMonthlyTrend(data: any[]) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const trend = months.map((m) => ({ month: m, amount: 0 }));
 
     data.forEach((item) => {
@@ -284,7 +359,13 @@ export class AnalyticsService {
 
   // --- Project Management Analytics ---
   async getProjectsAnalytics(tenantId: string) {
-    const [projects, activeCount, completedCount, overdueTasksCount, upcomingMilestonesCount] = await Promise.all([
+    const [
+      projects,
+      activeCount,
+      completedCount,
+      overdueTasksCount,
+      upcomingMilestonesCount,
+    ] = await Promise.all([
       this.prisma.project.findMany({
         where: { tenantId, deletedAt: null },
       }),
@@ -338,11 +419,15 @@ export class AnalyticsService {
     return projects.map((p) => {
       const totalTasks = p.tasks.length;
       const completedTasks = p.tasks.filter((t) => t.status === 'DONE').length;
-      const progressPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      const progressPercent =
+        totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
       const totalMilestones = p.milestones.length;
-      const completedMilestones = p.milestones.filter((m) => m.status === 'COMPLETED').length;
-      const milestonesProgress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
+      const completedMilestones = p.milestones.filter(
+        (m) => m.status === 'COMPLETED',
+      ).length;
+      const milestonesProgress =
+        totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
       const taskStatusDist = {
         todo: p.tasks.filter((t) => t.status === 'TODO').length,
@@ -380,7 +465,8 @@ export class AnalyticsService {
 
     return projects.map((p) => {
       const variance = p.plannedBudget - p.actualBudget;
-      const percentageUsed = p.plannedBudget > 0 ? (p.actualBudget / p.plannedBudget) * 100 : 0;
+      const percentageUsed =
+        p.plannedBudget > 0 ? (p.actualBudget / p.plannedBudget) * 100 : 0;
       return {
         projectId: p.id,
         name: p.name,
@@ -412,7 +498,10 @@ export class AnalyticsService {
           m.project.deletedAt === null &&
           !['COMPLETED', 'CANCELLED'].includes(m.project.status),
       );
-      const totalAllocation = activeMemberships.reduce((sum, m) => sum + m.allocationPercentage, 0);
+      const totalAllocation = activeMemberships.reduce(
+        (sum, m) => sum + m.allocationPercentage,
+        0,
+      );
 
       return {
         employeeId: emp.id,
@@ -425,6 +514,46 @@ export class AnalyticsService {
           allocationPercentage: m.allocationPercentage,
         })),
       };
+    });
+  }
+
+  async getDashboardLayout(userId: string, tenantId: string) {
+    const savedLayout = await this.prisma.userDashboardLayout.findFirst({
+      where: { userId, tenantId },
+    });
+
+    if (savedLayout) {
+      return savedLayout.layout;
+    }
+
+    // Return beautiful, standard enterprise grid layout defaults
+    return [
+      { id: 'revenue', x: 0, y: 0, w: 6, h: 4, type: 'chart' },
+      { id: 'expenses', x: 6, y: 0, w: 6, h: 4, type: 'chart' },
+      { id: 'payroll', x: 0, y: 4, w: 4, h: 3, type: 'metric' },
+      { id: 'inventory', x: 4, y: 4, w: 4, h: 3, type: 'metric' },
+      { id: 'projects', x: 8, y: 4, w: 4, h: 3, type: 'metric' },
+    ];
+  }
+
+  async saveDashboardLayout(userId: string, tenantId: string, layout: any) {
+    const existing = await this.prisma.userDashboardLayout.findFirst({
+      where: { userId, tenantId },
+    });
+
+    if (existing) {
+      return this.prisma.userDashboardLayout.update({
+        where: { id: existing.id },
+        data: { layout },
+      });
+    }
+
+    return this.prisma.userDashboardLayout.create({
+      data: {
+        userId,
+        tenantId,
+        layout,
+      },
     });
   }
 }

@@ -158,9 +158,14 @@ export class InvoicesService extends CrudService<Invoice> {
     return stats;
   }
 
-  async recordPayment(tenantId: string, id: string, amount: number, userId?: string) {
+  async recordPayment(
+    tenantId: string,
+    id: string,
+    amount: number,
+    userId?: string,
+  ) {
     const invoiceWrapper = await this.findOne(tenantId, id);
-    const invoice = invoiceWrapper.data as any;
+    const invoice = invoiceWrapper.data;
 
     const newAmountPaid = invoice.amountPaid + amount;
     let newStatus = invoice.status;
@@ -175,7 +180,7 @@ export class InvoicesService extends CrudService<Invoice> {
       where: { id },
       data: {
         amountPaid: newAmountPaid,
-        status: newStatus as any,
+        status: newStatus,
       },
     });
 

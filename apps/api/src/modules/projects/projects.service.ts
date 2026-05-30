@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
 import {
@@ -38,7 +42,14 @@ export class ProjectsService {
       sortOrder?: 'asc' | 'desc';
     },
   ) {
-    const { skip, take, search, status, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const {
+      skip,
+      take,
+      search,
+      status,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query;
 
     return this.prisma.project.findMany({
       where: {
@@ -97,15 +108,23 @@ export class ProjectsService {
     return project;
   }
 
-  async update(tenantId: string, id: string, updateProjectDto: UpdateProjectDto) {
-    const project = await this.findOne(tenantId, id);
+  async update(
+    tenantId: string,
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ) {
+    await this.findOne(tenantId, id);
 
     const updated = await this.prisma.project.update({
       where: { id },
       data: {
         ...updateProjectDto,
-        startDate: updateProjectDto.startDate ? new Date(updateProjectDto.startDate) : undefined,
-        endDate: updateProjectDto.endDate ? new Date(updateProjectDto.endDate) : undefined,
+        startDate: updateProjectDto.startDate
+          ? new Date(updateProjectDto.startDate)
+          : undefined,
+        endDate: updateProjectDto.endDate
+          ? new Date(updateProjectDto.endDate)
+          : undefined,
       },
     });
 
@@ -147,7 +166,10 @@ export class ProjectsService {
   }
 
   // Helper trigger for budget notifications
-  private async triggerBudgetOverrunNotification(tenantId: string, project: any) {
+  private async triggerBudgetOverrunNotification(
+    tenantId: string,
+    project: any,
+  ) {
     // Notify ADMIN and MANAGER roles in the tenant
     const managers = await this.prisma.user.findMany({
       where: {
@@ -173,7 +195,11 @@ export class ProjectsService {
   }
 
   // Resource Allocation Engine
-  async addMember(tenantId: string, projectId: string, dto: AddProjectMemberDto) {
+  async addMember(
+    tenantId: string,
+    projectId: string,
+    dto: AddProjectMemberDto,
+  ) {
     // Check if project exists
     await this.findOne(tenantId, projectId);
 
@@ -182,11 +208,18 @@ export class ProjectsService {
       where: { id: dto.employeeId, tenantId },
     });
     if (!employee) {
-      throw new NotFoundException(`Employee with ID ${dto.employeeId} not found`);
+      throw new NotFoundException(
+        `Employee with ID ${dto.employeeId} not found`,
+      );
     }
 
     // Validate employee availability (Allocation cannot exceed 100% across active projects)
-    await this.validateEmployeeAvailability(tenantId, dto.employeeId, dto.allocationPercentage, projectId);
+    await this.validateEmployeeAvailability(
+      tenantId,
+      dto.employeeId,
+      dto.allocationPercentage,
+      projectId,
+    );
 
     // Add or update member
     return this.prisma.projectMember.upsert({
@@ -207,7 +240,12 @@ export class ProjectsService {
     });
   }
 
-  async updateMember(tenantId: string, projectId: string, employeeId: string, dto: UpdateProjectMemberDto) {
+  async updateMember(
+    tenantId: string,
+    projectId: string,
+    employeeId: string,
+    dto: UpdateProjectMemberDto,
+  ) {
     await this.findOne(tenantId, projectId);
 
     const member = await this.prisma.projectMember.findUnique({
@@ -220,7 +258,13 @@ export class ProjectsService {
     }
 
     // Validate employee availability
-    await this.validateEmployeeAvailability(tenantId, employeeId, dto.allocationPercentage, projectId, true);
+    await this.validateEmployeeAvailability(
+      tenantId,
+      employeeId,
+      dto.allocationPercentage,
+      projectId,
+      true,
+    );
 
     return this.prisma.projectMember.update({
       where: {
@@ -294,7 +338,10 @@ export class ProjectsService {
       status: m.project.status,
     }));
 
-    const totalAllocation = memberships.reduce((sum, m) => sum + m.allocationPercentage, 0);
+    const totalAllocation = memberships.reduce(
+      (sum, m) => sum + m.allocationPercentage,
+      0,
+    );
 
     return {
       employeeId,

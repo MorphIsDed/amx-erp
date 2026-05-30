@@ -16,7 +16,12 @@ export class WebhooksService {
   /**
    * Create a new webhook subscription
    */
-  async subscribe(tenantId: string, url: string, secret: string, eventTypes: string[]) {
+  async subscribe(
+    tenantId: string,
+    url: string,
+    secret: string,
+    eventTypes: string[],
+  ) {
     return this.prisma.webhookSubscription.create({
       data: {
         tenantId,
@@ -80,8 +85,10 @@ export class WebhooksService {
    * Enqueue event to BullMQ
    */
   private async dispatch(eventType: string, tenantId: string, payload: any) {
-    this.logger.log(`Dispatching webhook event: ${eventType} for tenant: ${tenantId}`);
-    
+    this.logger.log(
+      `Dispatching webhook event: ${eventType} for tenant: ${tenantId}`,
+    );
+
     // Find active subscriptions for this tenant subscribing to this event type
     const subscriptions = await this.prisma.webhookSubscription.findMany({
       where: {

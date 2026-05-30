@@ -13,7 +13,7 @@ export class MetricsController {
   async getMetrics(): Promise<string> {
     const uptime = process.uptime();
     const memory = process.memoryUsage();
-    
+
     // Measure PostgreSQL query latency
     const dbStart = Date.now();
     let dbStatus = 1;
@@ -52,7 +52,7 @@ export class MetricsController {
       '',
       '# HELP amx_database_latency_ms Database response latency in milliseconds.',
       '# TYPE amx_database_latency_ms gauge',
-      `amx_database_latency_ms ${dbLatency}`
+      `amx_database_latency_ms ${dbLatency}`,
     ];
 
     return lines.join('\n');

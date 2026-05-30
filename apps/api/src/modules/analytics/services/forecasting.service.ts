@@ -29,7 +29,8 @@ export interface SKUForecastResponse {
 @Injectable()
 export class ForecastingService {
   private readonly logger = new Logger(ForecastingService.name);
-  private readonly mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+  private readonly mlServiceUrl =
+    process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
   constructor(private prisma: PrismaService) {}
 
@@ -38,15 +39,21 @@ export class ForecastingService {
    */
   @Cron('0 0 * * 0')
   async handleWeeklyRetraining() {
-    this.logger.log('Starting scheduled weekly AI forecasting model retraining...');
+    this.logger.log(
+      'Starting scheduled weekly AI forecasting model retraining...',
+    );
     try {
       const tenants = await this.prisma.tenant.findMany();
       for (const tenant of tenants) {
         await this.retrainAllModels(tenant.id);
       }
-      this.logger.log('Scheduled weekly AI forecasting model retraining completed successfully.');
+      this.logger.log(
+        'Scheduled weekly AI forecasting model retraining completed successfully.',
+      );
     } catch (e) {
-      this.logger.error(`Error in weekly forecasting retraining cron: ${e.message}`);
+      this.logger.error(
+        `Error in weekly forecasting retraining cron: ${e.message}`,
+      );
     }
   }
 
@@ -145,8 +152,10 @@ export class ForecastingService {
    * Provides aggregate ML system health, model count, and average accuracies.
    */
   async getSummary(tenantId: string) {
-    const productsCount = await this.prisma.product.count({ where: { tenantId } });
-    
+    const productsCount = await this.prisma.product.count({
+      where: { tenantId },
+    });
+
     try {
       const response = await fetch(`${this.mlServiceUrl}/metrics`);
       if (response.ok) {
@@ -179,7 +188,10 @@ export class ForecastingService {
    * GET /forecasting/sku/:skuOrId
    * Gets demand prediction for a specific SKU (runs 30/60/90 day forecast).
    */
-  async getSkuForecast(tenantId: string, skuOrId: string): Promise<SKUForecastResponse> {
+  async getSkuForecast(
+    tenantId: string,
+    skuOrId: string,
+  ): Promise<SKUForecastResponse> {
     const product = await this.prisma.product.findFirst({
       where: {
         tenantId,
@@ -188,7 +200,9 @@ export class ForecastingService {
     });
 
     if (!product) {
-      throw new NotFoundException(`Product with SKU or ID ${skuOrId} not found`);
+      throw new NotFoundException(
+        `Product with SKU or ID ${skuOrId} not found`,
+      );
     }
 
     try {
@@ -200,7 +214,7 @@ export class ForecastingService {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         // Try to fetch active model metrics from /models if available
         let metrics: { mape: number; rmse: number } | undefined;
         try {
@@ -212,7 +226,9 @@ export class ForecastingService {
               metrics = modelInfo.metrics;
             }
           }
-        } catch {}
+        } catch {
+          // Ignore fetch errors, metrics are optional
+        }
 
         return {
           sku: product.sku,
@@ -224,7 +240,9 @@ export class ForecastingService {
         };
       }
     } catch (e) {
-      this.logger.warn(`Failed to get predictions from FastAPI: ${e.message}. Using offline fallback.`);
+      this.logger.warn(
+        `Failed to get predictions from FastAPI: ${e.message}. Using offline fallback.`,
+      );
     }
 
     // High quality offline fallback predictions
@@ -234,7 +252,10 @@ export class ForecastingService {
     for (let i = 1; i <= 90; i++) {
       const curr = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
       const season = 3.0 * Math.sin((2 * Math.PI * curr.getDay()) / 7);
-      const val = Math.max(1, Math.round((baseDemand + season + (Math.random() - 0.5) * 2) * 10) / 10);
+      const val = Math.max(
+        1,
+        Math.round((baseDemand + season + (Math.random() - 0.5) * 2) * 10) / 10,
+      );
       predictions.push({
         date: curr.toISOString().split('T')[0],
         quantity: val,
@@ -278,14 +299,18 @@ export class ForecastingService {
       }),
     );
 
-    return forecasts.sort((a, b) => b.forecastedVolume30d - a.forecastedVolume30d).slice(0, 5);
+    return forecasts
+      .sort((a, b) => b.forecastedVolume30d - a.forecastedVolume30d)
+      .slice(0, 5);
   }
 
   /**
    * Retrains models for all active products in tenant
    */
   async retrainAllModels(tenantId: string) {
-    this.logger.log(`Starting forecasting model retraining for tenant: ${tenantId}`);
+    this.logger.log(
+      `Starting forecasting model retraining for tenant: ${tenantId}`,
+    );
     const products = await this.prisma.product.findMany({
       where: { tenantId },
       include: {
@@ -315,7 +340,14 @@ export class ForecastingService {
           const pastDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
           generatedPoints.push({
             date: pastDate.toISOString().split('T')[0],
-            quantity: Math.max(1, Math.round(baseDemand + Math.sin(pastDate.getDay()) * 3 + (Math.random() - 0.5) * 2)),
+            quantity: Math.max(
+              1,
+              Math.round(
+                baseDemand +
+                  Math.sin(pastDate.getDay()) * 3 +
+                  (Math.random() - 0.5) * 2,
+              ),
+            ),
           });
         }
         demandPoints = [...demandPoints, ...generatedPoints].slice(0, 10);

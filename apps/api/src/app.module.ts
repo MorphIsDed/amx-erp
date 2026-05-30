@@ -21,14 +21,21 @@ import { AppGraphQLModule } from './graphql/graphql.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
+import { SecretProvider } from './common/secrets/secret.provider';
+
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', 'apps/api/.env', '../api/.env'],
+    }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 100, // max 100 requests per IP per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // max 100 requests per IP per minute
+      },
+    ]),
     EventEmitterModule.forRoot({
       wildcard: true,
       delimiter: '.',
@@ -54,6 +61,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    SecretProvider,
   ],
 })
 export class AppModule {}

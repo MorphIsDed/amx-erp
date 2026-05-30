@@ -47,7 +47,7 @@ export class PayrollService {
       employees.map(async (emp) => {
         const basicSalary = emp.baseSalary || 50000;
         const allowances = emp.allowances || 0;
-        let deductions = emp.deductions || 0;
+        const deductions = emp.deductions || 0;
 
         // Calculate unpaid leave days falling within this period
         const unpaidLeaves = await this.prisma.leave.findMany({
@@ -63,8 +63,14 @@ export class PayrollService {
 
         let leaveDays = 0;
         unpaidLeaves.forEach((leave) => {
-          const start = Math.max(new Date(leave.startDate).getTime(), periodStart.getTime());
-          const end = Math.min(new Date(leave.endDate).getTime(), periodEnd.getTime());
+          const start = Math.max(
+            new Date(leave.startDate).getTime(),
+            periodStart.getTime(),
+          );
+          const end = Math.min(
+            new Date(leave.endDate).getTime(),
+            periodEnd.getTime(),
+          );
           const diffTime = Math.max(0, end - start);
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
           leaveDays += diffDays;
@@ -74,16 +80,17 @@ export class PayrollService {
         const grossSalary = basicSalary + allowances;
 
         // Tax Engine (Slabs: >100k: 20%, >50k: 10%, else 5%)
-        let tax = 0;
-        if (grossSalary > 100000) {
-          tax = Math.round(grossSalary * 0.20);
-        } else if (grossSalary > 50000) {
-          tax = Math.round(grossSalary * 0.10);
-        } else {
-          tax = Math.round(grossSalary * 0.05);
-        }
+        const tax =
+          grossSalary > 100000
+            ? Math.round(grossSalary * 0.2)
+            : grossSalary > 50000
+              ? Math.round(grossSalary * 0.1)
+              : Math.round(grossSalary * 0.05);
 
-        const netSalary = Math.max(0, grossSalary - tax - deductions - leavePenalty);
+        const netSalary = Math.max(
+          0,
+          grossSalary - tax - deductions - leavePenalty,
+        );
         totalRunAmount += netSalary;
 
         return this.prisma.payslip.create({
@@ -192,7 +199,9 @@ export class PayrollService {
     });
 
     return stats.map((run) => ({
-      month: new Date(run.createdAt).toLocaleString('default', { month: 'short' }),
+      month: new Date(run.createdAt).toLocaleString('default', {
+        month: 'short',
+      }),
       cost: run.totalAmount,
     }));
   }

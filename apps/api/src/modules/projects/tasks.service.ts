@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
-import { CreateTaskDto, UpdateTaskDto, CreateTaskDependencyDto } from './dto/project.dto';
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  CreateTaskDependencyDto,
+} from './dto/project.dto';
 import { TaskStatus, Role } from '@repo/db';
 
 @Injectable()
@@ -23,7 +31,11 @@ export class TasksService {
     // Verify milestone if provided
     if (createTaskDto.milestoneId) {
       const milestone = await this.prisma.milestone.findFirst({
-        where: { id: createTaskDto.milestoneId, projectId: createTaskDto.projectId, tenantId },
+        where: {
+          id: createTaskDto.milestoneId,
+          projectId: createTaskDto.projectId,
+          tenantId,
+        },
       });
       if (!milestone) {
         throw new NotFoundException(`Milestone not found in this project`);
@@ -68,7 +80,15 @@ export class TasksService {
       take?: number;
     },
   ) {
-    const { projectId, milestoneId, assignedEmployeeId, status, search, skip, take } = query;
+    const {
+      projectId,
+      milestoneId,
+      assignedEmployeeId,
+      status,
+      search,
+      skip,
+      take,
+    } = query;
 
     return this.prisma.task.findMany({
       where: {
@@ -136,9 +156,16 @@ export class TasksService {
     const task = await this.findOne(tenantId, id);
 
     // Verify milestone if provided
-    if (updateTaskDto.milestoneId && updateTaskDto.milestoneId !== task.milestoneId) {
+    if (
+      updateTaskDto.milestoneId &&
+      updateTaskDto.milestoneId !== task.milestoneId
+    ) {
       const milestone = await this.prisma.milestone.findFirst({
-        where: { id: updateTaskDto.milestoneId, projectId: task.projectId, tenantId },
+        where: {
+          id: updateTaskDto.milestoneId,
+          projectId: task.projectId,
+          tenantId,
+        },
       });
       if (!milestone) {
         throw new NotFoundException(`Milestone not found in this project`);
@@ -146,7 +173,10 @@ export class TasksService {
     }
 
     // Verify employee if provided
-    if (updateTaskDto.assignedEmployeeId && updateTaskDto.assignedEmployeeId !== task.assignedEmployeeId) {
+    if (
+      updateTaskDto.assignedEmployeeId &&
+      updateTaskDto.assignedEmployeeId !== task.assignedEmployeeId
+    ) {
       const employee = await this.prisma.employee.findFirst({
         where: { id: updateTaskDto.assignedEmployeeId, tenantId },
       });
@@ -159,18 +189,27 @@ export class TasksService {
       where: { id },
       data: {
         ...updateTaskDto,
-        dueDate: updateTaskDto.dueDate ? new Date(updateTaskDto.dueDate) : undefined,
+        dueDate: updateTaskDto.dueDate
+          ? new Date(updateTaskDto.dueDate)
+          : undefined,
       },
     });
 
     // Notify on assignment change
-    if (updated.assignedEmployeeId && updated.assignedEmployeeId !== task.assignedEmployeeId) {
+    if (
+      updated.assignedEmployeeId &&
+      updated.assignedEmployeeId !== task.assignedEmployeeId
+    ) {
       await this.notifyAssignee(tenantId, updated);
     }
 
     // Notify managers on completion
     if (updated.status === TaskStatus.DONE && task.status !== TaskStatus.DONE) {
-      await this.notifyManagersOfCompletion(tenantId, updated, task.project.name);
+      await this.notifyManagersOfCompletion(
+        tenantId,
+        updated,
+        task.project.name,
+      );
     }
 
     return updated;
@@ -190,7 +229,9 @@ export class TasksService {
     const successor = await this.findOne(tenantId, dto.successorTaskId);
 
     if (predecessor.projectId !== successor.projectId) {
-      throw new BadRequestException('Tasks must belong to the same project to form dependencies.');
+      throw new BadRequestException(
+        'Tasks must belong to the same project to form dependencies.',
+      );
     }
 
     if (dto.predecessorTaskId === dto.successorTaskId) {
@@ -214,7 +255,11 @@ export class TasksService {
     // Wait, if successor depends on predecessor, then successor must be executed AFTER predecessor.
     // Graph edge is predecessor -> successor.
     // If we want to add predecessor -> successor, a cycle exists if there is already a path from successor -> predecessor.
-    const hasCycle = await this.detectCyclePath(dto.successorTaskId, dto.predecessorTaskId, new Set<string>());
+    const hasCycle = await this.detectCyclePath(
+      dto.successorTaskId,
+      dto.predecessorTaskId,
+      new Set<string>(),
+    );
     if (hasCycle) {
       throw new BadRequestException(
         `Circular dependency detected: Adding this dependency would cause a loop where task "${predecessor.title}" depends on task "${successor.title}", while "${successor.title}" already succeeds it.`,
@@ -229,7 +274,11 @@ export class TasksService {
     });
   }
 
-  async removeDependency(tenantId: string, predecessorTaskId: string, successorTaskId: string) {
+  async removeDependency(
+    tenantId: string,
+    predecessorTaskId: string,
+    successorTaskId: string,
+  ) {
     // Verify both tasks belong to tenant
     await this.findOne(tenantId, predecessorTaskId);
     await this.findOne(tenantId, successorTaskId);
@@ -245,7 +294,11 @@ export class TasksService {
   }
 
   // DFS Cycle Detection helper
-  private async detectCyclePath(currentTaskId: string, targetTaskId: string, visited: Set<string>): Promise<boolean> {
+  private async detectCyclePath(
+    currentTaskId: string,
+    targetTaskId: string,
+    visited: Set<string>,
+  ): Promise<boolean> {
     if (currentTaskId === targetTaskId) {
       return true;
     }
@@ -264,7 +317,11 @@ export class TasksService {
     });
 
     for (const dep of dependencies) {
-      const reached = await this.detectCyclePath(dep.successorTaskId, targetTaskId, visited);
+      const reached = await this.detectCyclePath(
+        dep.successorTaskId,
+        targetTaskId,
+        visited,
+      );
       if (reached) {
         return true;
       }
@@ -293,12 +350,19 @@ export class TasksService {
           link: `/projects/${task.projectId}/tasks`,
         });
       } catch (err) {
-        console.error(`Failed to send task assignment alert to user ${user.id}`, err);
+        console.error(
+          `Failed to send task assignment alert to user ${user.id}`,
+          err,
+        );
       }
     }
   }
 
-  private async notifyManagersOfCompletion(tenantId: string, task: any, projectName: string) {
+  private async notifyManagersOfCompletion(
+    tenantId: string,
+    task: any,
+    projectName: string,
+  ) {
     const managers = await this.prisma.user.findMany({
       where: {
         tenantId,
@@ -317,7 +381,10 @@ export class TasksService {
           link: `/projects/${task.projectId}`,
         });
       } catch (err) {
-        console.error(`Failed to send task completion notification to user ${manager.id}`, err);
+        console.error(
+          `Failed to send task completion notification to user ${manager.id}`,
+          err,
+        );
       }
     }
   }

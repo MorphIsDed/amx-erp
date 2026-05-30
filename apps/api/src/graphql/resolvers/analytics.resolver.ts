@@ -2,7 +2,11 @@ import { Resolver, Query, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../guards/gql-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
-import { ForecastModel, InventoryInsightModel, SKUForecastModel } from '../models/analytics.model';
+import {
+  ForecastModel,
+  InventoryInsightModel,
+  SKUForecastModel,
+} from '../models/analytics.model';
 import { ForecastingService } from '../../modules/analytics/services/forecasting.service';
 
 @Resolver()

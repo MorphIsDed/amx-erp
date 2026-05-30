@@ -17,7 +17,11 @@ export class FinanceResolver {
     @Args('take', { type: () => Int, nullable: true }) take?: number,
     @Args('status', { nullable: true }) status?: string,
   ) {
-    const result = await this.invoicesService.findAll(user.tenantId, { skip, take, status });
+    const result = await this.invoicesService.findAll(user.tenantId, {
+      skip,
+      take,
+      status,
+    });
     return result.data;
   }
 

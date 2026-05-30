@@ -17,7 +17,12 @@ import { PayrollProcessor } from './processors/payroll.processor';
     }),
   ],
   controllers: [EmployeesController, PayrollController, LeavesController],
-  providers: [EmployeesService, PayrollService, LeavesService, PayrollProcessor],
+  providers: [
+    EmployeesService,
+    PayrollService,
+    LeavesService,
+    PayrollProcessor,
+  ],
   exports: [EmployeesService, PayrollService, LeavesService],
 })
 export class HrModule {}

@@ -11,7 +11,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto, UpdateTaskDto, CreateTaskDependencyDto } from './dto/project.dto';
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  CreateTaskDependencyDto,
+} from './dto/project.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -29,7 +33,10 @@ export class TasksController {
   @Roles(Role.ADMIN, Role.MANAGER, Role.EMPLOYEE)
   @ApiOperation({ summary: 'Create a new task' })
   async create(@Request() req: any, @Body() createTaskDto: CreateTaskDto) {
-    const result = await this.tasksService.create(req.user.tenantId, createTaskDto);
+    const result = await this.tasksService.create(
+      req.user.tenantId,
+      createTaskDto,
+    );
     return { data: result };
   }
 
@@ -74,7 +81,11 @@ export class TasksController {
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
-    const result = await this.tasksService.update(req.user.tenantId, id, updateTaskDto);
+    const result = await this.tasksService.update(
+      req.user.tenantId,
+      id,
+      updateTaskDto,
+    );
     return { data: result };
   }
 
@@ -89,8 +100,14 @@ export class TasksController {
   @Post('dependencies')
   @Roles(Role.ADMIN, Role.MANAGER, Role.EMPLOYEE)
   @ApiOperation({ summary: 'Create a task dependency with circular checking' })
-  async addDependency(@Request() req: any, @Body() dto: CreateTaskDependencyDto) {
-    const result = await this.tasksService.addDependency(req.user.tenantId, dto);
+  async addDependency(
+    @Request() req: any,
+    @Body() dto: CreateTaskDependencyDto,
+  ) {
+    const result = await this.tasksService.addDependency(
+      req.user.tenantId,
+      dto,
+    );
     return { data: result };
   }
 
@@ -102,6 +119,10 @@ export class TasksController {
     @Param('predecessorTaskId') predecessorTaskId: string,
     @Param('successorTaskId') successorTaskId: string,
   ) {
-    return this.tasksService.removeDependency(req.user.tenantId, predecessorTaskId, successorTaskId);
+    return this.tasksService.removeDependency(
+      req.user.tenantId,
+      predecessorTaskId,
+      successorTaskId,
+    );
   }
 }

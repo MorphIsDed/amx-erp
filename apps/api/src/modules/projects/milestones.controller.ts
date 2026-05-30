@@ -28,16 +28,27 @@ export class MilestonesController {
   @Post()
   @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Create a new milestone' })
-  async create(@Request() req: any, @Body() createMilestoneDto: CreateMilestoneDto) {
-    const result = await this.milestonesService.create(req.user.tenantId, createMilestoneDto);
+  async create(
+    @Request() req: any,
+    @Body() createMilestoneDto: CreateMilestoneDto,
+  ) {
+    const result = await this.milestonesService.create(
+      req.user.tenantId,
+      createMilestoneDto,
+    );
     return { data: result };
   }
 
   @Get()
   @Roles(Role.ADMIN, Role.MANAGER, Role.HR, Role.FINANCE, Role.EMPLOYEE)
-  @ApiOperation({ summary: 'Get all milestones, optionally filtered by projectId' })
+  @ApiOperation({
+    summary: 'Get all milestones, optionally filtered by projectId',
+  })
   async findAll(@Request() req: any, @Query('projectId') projectId?: string) {
-    const result = await this.milestonesService.findAll(req.user.tenantId, projectId);
+    const result = await this.milestonesService.findAll(
+      req.user.tenantId,
+      projectId,
+    );
     return { data: result };
   }
 
@@ -57,7 +68,11 @@ export class MilestonesController {
     @Param('id') id: string,
     @Body() updateMilestoneDto: UpdateMilestoneDto,
   ) {
-    const result = await this.milestonesService.update(req.user.tenantId, id, updateMilestoneDto);
+    const result = await this.milestonesService.update(
+      req.user.tenantId,
+      id,
+      updateMilestoneDto,
+    );
     return { data: result };
   }
 

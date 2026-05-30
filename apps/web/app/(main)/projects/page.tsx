@@ -234,7 +234,7 @@ export default function ProjectsPage() {
         <div className="text-center py-20 text-text-muted text-xs">Loading project portfolio...</div>
       ) : projects.length === 0 ? (
         <div className="text-center py-20 bg-card/10 border border-dashed border-border/20 rounded-2xl text-text-faint text-xs">
-          No projects found. Use the "New Project" button to create one.
+          No projects found. Use the &quot;New Project&quot; button to create one.
         </div>
       ) : (
         <motion.div variants={container} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

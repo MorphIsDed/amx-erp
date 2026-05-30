@@ -1,4 +1,12 @@
-import { Resolver, Query, Args, Int, ResolveField, Parent, Context } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Args,
+  Int,
+  ResolveField,
+  Parent,
+  Context,
+} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../guards/gql-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
@@ -27,13 +35,13 @@ export class ProjectsResolver {
   }
 
   @ResolveField(() => [EmployeeModel])
-  async members(
-    @Parent() project: ProjectModel,
-    @Context() ctx: any,
-  ) {
-    const resources = await this.projectsService.getProjectResources(project.tenantId, project.id);
+  async members(@Parent() project: ProjectModel, @Context() ctx: any) {
+    const resources = await this.projectsService.getProjectResources(
+      project.tenantId,
+      project.id,
+    );
     return Promise.all(
-      resources.map((res) => ctx.loaders.employeeLoader.load(res.employeeId))
+      resources.map((res) => ctx.loaders.employeeLoader.load(res.employeeId)),
     );
   }
 }

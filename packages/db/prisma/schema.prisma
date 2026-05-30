@@ -120,6 +120,9 @@ model Tenant {
   projects            Project[]
   milestones          Milestone[]
   tasks               Task[]
+
+  ssoConfig           Json?
+  dashboardLayouts    UserDashboardLayout[]
 }
 
 model User {
@@ -138,6 +141,11 @@ model User {
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
   activityLogs            ActivityLog[]
+
+  mfaSecret               String?
+  mfaEnabled              Boolean                  @default(false)
+  mfaRecoveryCodes        String?
+  dashboardLayouts        UserDashboardLayout[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -714,5 +722,18 @@ model TaskDependency {
   successor         Task   @relation("successor", fields: [successorTaskId], references: [id], onDelete: Cascade)
 
   @@id([predecessorTaskId, successorTaskId])
+}
+
+model UserDashboardLayout {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  layout    Json     // Array of widgets with x, y, w, h
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tenantId])
 }
 

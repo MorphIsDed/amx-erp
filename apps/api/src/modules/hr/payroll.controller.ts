@@ -74,6 +74,9 @@ export class PayrollController {
   @Roles(Role.ADMIN, Role.HR, Role.MANAGER, Role.EMPLOYEE)
   @ApiOperation({ summary: 'Get payroll history for a specific employee' })
   getEmpHistory(@Request() req: any, @Param('employeeId') employeeId: string) {
-    return this.payrollService.getEmployeePayrollHistory(req.user.tenantId, employeeId);
+    return this.payrollService.getEmployeePayrollHistory(
+      req.user.tenantId,
+      employeeId,
+    );
   }
 }

@@ -1,5 +1,7 @@
 import datetime
 import math
+import json
+import os
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any, Optional
@@ -19,8 +21,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registry to store model metadata and historical data in-memory for ease of persistence
+# Registry to store model metadata and historical data
 model_registry: Dict[str, Dict[str, Any]] = {}
+
+# File path for registry persistence
+REGISTRY_FILE = os.path.join(os.path.dirname(__file__), "registry.json")
+
+def save_registry():
+    try:
+        serializable_registry = {}
+        for sku, val in model_registry.items():
+            serializable_registry[sku] = {
+                "active": val["active"],
+                "history": val["history"],
+                "data": [{"date": d.date, "quantity": d.quantity} if hasattr(d, "date") else d for d in val["data"]]
+            }
+        with open(REGISTRY_FILE, "w") as f:
+            json.dump(serializable_registry, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save model registry: {e}")
+
+def load_registry():
+    global model_registry
+    if os.path.exists(REGISTRY_FILE):
+        try:
+            with open(REGISTRY_FILE, "r") as f:
+                loaded = json.load(f)
+                model_registry.clear()
+                model_registry.update(loaded)
+                print(f"Successfully loaded model registry from disk with {len(model_registry)} SKUs.")
+        except Exception as e:
+            print(f"Failed to load model registry from disk: {e}")
+
+@app.on_event("startup")
+def startup_event():
+    load_registry()
 
 class DemandPoint(BaseModel):
     date: str
@@ -110,6 +145,8 @@ def train(req: TrainRequest):
         model_registry[sku]["active"] = metadata
         model_registry[sku]["history"].append(metadata)
         model_registry[sku]["data"] = data
+
+    save_registry()
 
     return {
         "status": "trained",

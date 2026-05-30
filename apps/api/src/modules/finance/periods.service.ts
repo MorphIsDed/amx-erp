@@ -10,7 +10,10 @@ export class PeriodsService extends CrudService<AccountingPeriod> {
     super(prisma.accountingPeriod);
   }
 
-  async createPeriod(tenantId: string, dto: CreatePeriodDto): Promise<AccountingPeriod> {
+  async createPeriod(
+    tenantId: string,
+    dto: CreatePeriodDto,
+  ): Promise<AccountingPeriod> {
     return this.prisma.accountingPeriod.create({
       data: {
         name: dto.name,

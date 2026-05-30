@@ -1,4 +1,14 @@
-import { Resolver, Query, Args, Int, ResolveField, Parent, Context } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Args,
+  Int,
+  ResolveField,
+  Parent,
+  Context,
+  Field,
+  ObjectType,
+} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../guards/gql-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
@@ -16,8 +26,6 @@ class DepartmentModel {
   @Field({ nullable: true })
   description?: string;
 }
-
-import { Field, ObjectType } from '@nestjs/graphql';
 
 @Resolver(() => EmployeeModel)
 @UseGuards(GqlAuthGuard)
@@ -40,11 +48,8 @@ export class EmployeesResolver {
   }
 
   @ResolveField(() => DepartmentModel, { nullable: true })
-  async department(
-    @Parent() employee: EmployeeModel,
-    @Context() ctx: any,
-  ) {
+  async department(@Parent() employee: EmployeeModel, @Context() ctx: any) {
     if (!employee.departmentId) return null;
-    return ctx.loaders.departmentLoader.load(employee.departmentId);
+    return await ctx.loaders.departmentLoader.load(employee.departmentId);
   }
 }

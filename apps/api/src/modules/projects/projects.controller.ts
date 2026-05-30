@@ -33,8 +33,14 @@ export class ProjectsController {
   @Post()
   @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Create a new project' })
-  async create(@Request() req: any, @Body() createProjectDto: CreateProjectDto) {
-    const result = await this.projectsService.create(req.user.tenantId, createProjectDto);
+  async create(
+    @Request() req: any,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
+    const result = await this.projectsService.create(
+      req.user.tenantId,
+      createProjectDto,
+    );
     return { data: result };
   }
 
@@ -63,9 +69,15 @@ export class ProjectsController {
 
   @Get('employee-allocation/:employeeId')
   @Roles(Role.ADMIN, Role.MANAGER, Role.HR)
-  @ApiOperation({ summary: 'Get an employee\'s active project allocations' })
-  async getEmployeeAllocation(@Request() req: any, @Param('employeeId') employeeId: string) {
-    const result = await this.projectsService.getEmployeeAllocation(req.user.tenantId, employeeId);
+  @ApiOperation({ summary: "Get an employee's active project allocations" })
+  async getEmployeeAllocation(
+    @Request() req: any,
+    @Param('employeeId') employeeId: string,
+  ) {
+    const result = await this.projectsService.getEmployeeAllocation(
+      req.user.tenantId,
+      employeeId,
+    );
     return { data: result };
   }
 
@@ -85,7 +97,11 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
-    const result = await this.projectsService.update(req.user.tenantId, id, updateProjectDto);
+    const result = await this.projectsService.update(
+      req.user.tenantId,
+      id,
+      updateProjectDto,
+    );
     return { data: result };
   }
 
@@ -101,7 +117,10 @@ export class ProjectsController {
   @Roles(Role.ADMIN, Role.MANAGER, Role.HR)
   @ApiOperation({ summary: 'Get project resources' })
   async getResources(@Request() req: any, @Param('id') id: string) {
-    const result = await this.projectsService.getProjectResources(req.user.tenantId, id);
+    const result = await this.projectsService.getProjectResources(
+      req.user.tenantId,
+      id,
+    );
     return { data: result };
   }
 
@@ -113,20 +132,29 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() dto: AddProjectMemberDto,
   ) {
-    const result = await this.projectsService.addMember(req.user.tenantId, id, dto);
+    const result = await this.projectsService.addMember(
+      req.user.tenantId,
+      id,
+      dto,
+    );
     return { data: result };
   }
 
   @Put(':id/resources/:employeeId')
   @Roles(Role.ADMIN, Role.MANAGER, Role.HR)
-  @ApiOperation({ summary: 'Update a member\'s project allocation percentage' })
+  @ApiOperation({ summary: "Update a member's project allocation percentage" })
   async updateResource(
     @Request() req: any,
     @Param('id') id: string,
     @Param('employeeId') employeeId: string,
     @Body() dto: UpdateProjectMemberDto,
   ) {
-    const result = await this.projectsService.updateMember(req.user.tenantId, id, employeeId, dto);
+    const result = await this.projectsService.updateMember(
+      req.user.tenantId,
+      id,
+      employeeId,
+      dto,
+    );
     return { data: result };
   }
 
@@ -146,7 +174,10 @@ export class ProjectsController {
   @Roles(Role.ADMIN, Role.MANAGER, Role.FINANCE)
   @ApiOperation({ summary: 'Get project budget performance report' })
   async getBudget(@Request() req: any, @Param('id') id: string) {
-    const result = await this.projectsService.getBudgetTracker(req.user.tenantId, id);
+    const result = await this.projectsService.getBudgetTracker(
+      req.user.tenantId,
+      id,
+    );
     return { data: result };
   }
 }

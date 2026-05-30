@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, UseGuards, Request, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  UseGuards,
+  Request,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -19,11 +28,18 @@ export class WebhooksController {
   @Post('subscribe')
   @ApiOperation({ summary: 'Register a new webhook subscription' })
   subscribe(@Request() req: any, @Body() dto: SubscribeDto) {
-    return this.webhooksService.subscribe(req.user.tenantId, dto.url, dto.secret, dto.eventTypes);
+    return this.webhooksService.subscribe(
+      req.user.tenantId,
+      dto.url,
+      dto.secret,
+      dto.eventTypes,
+    );
   }
 
   @Get('subscriptions')
-  @ApiOperation({ summary: 'List all active webhook subscriptions for the tenant' })
+  @ApiOperation({
+    summary: 'List all active webhook subscriptions for the tenant',
+  })
   getSubscriptions(@Request() req: any) {
     return this.webhooksService.getSubscriptions(req.user.tenantId);
   }

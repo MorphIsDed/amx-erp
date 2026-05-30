@@ -14,7 +14,11 @@ export class LeavesService extends CrudService<Leave> {
     super(prisma.leave);
   }
 
-  async createLeave(tenantId: string, employeeId: string, dto: CreateLeaveDto): Promise<Leave> {
+  async createLeave(
+    tenantId: string,
+    employeeId: string,
+    dto: CreateLeaveDto,
+  ): Promise<Leave> {
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
     });
@@ -56,7 +60,11 @@ export class LeavesService extends CrudService<Leave> {
     });
 
     if (dto.status === LeaveStatus.APPROVED) {
-      this.eventEmitter.emit('leave.approved', { leave: updated, tenantId, userId });
+      this.eventEmitter.emit('leave.approved', {
+        leave: updated,
+        tenantId,
+        userId,
+      });
     }
 
     this.eventEmitter.emit('audit.log', {

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Patch, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Headers,
+} from '@nestjs/common';
 import { PeriodsService } from './periods.service';
 import { CreatePeriodDto } from './dto/finance.dto';
 import { ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
@@ -11,7 +19,10 @@ export class PeriodsController {
   constructor(private readonly periodsService: PeriodsService) {}
 
   @Post()
-  create(@Headers('x-tenant-id') tenantId: string, @Body() dto: CreatePeriodDto) {
+  create(
+    @Headers('x-tenant-id') tenantId: string,
+    @Body() dto: CreatePeriodDto,
+  ) {
     return this.periodsService.createPeriod(tenantId, dto);
   }
 

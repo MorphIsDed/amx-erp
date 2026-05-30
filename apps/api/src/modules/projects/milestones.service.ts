@@ -71,27 +71,36 @@ export class MilestonesService {
     return milestone;
   }
 
-  async update(tenantId: string, id: string, updateMilestoneDto: UpdateMilestoneDto) {
+  async update(
+    tenantId: string,
+    id: string,
+    updateMilestoneDto: UpdateMilestoneDto,
+  ) {
     const milestone = await this.findOne(tenantId, id);
 
     const completedAt =
       updateMilestoneDto.status === MilestoneStatus.COMPLETED
         ? new Date()
         : updateMilestoneDto.status
-        ? null
-        : undefined;
+          ? null
+          : undefined;
 
     const updated = await this.prisma.milestone.update({
       where: { id },
       data: {
         ...updateMilestoneDto,
-        dueDate: updateMilestoneDto.dueDate ? new Date(updateMilestoneDto.dueDate) : undefined,
+        dueDate: updateMilestoneDto.dueDate
+          ? new Date(updateMilestoneDto.dueDate)
+          : undefined,
         completedAt,
       },
     });
 
     // Alert on status change
-    if (updateMilestoneDto.status && updateMilestoneDto.status !== milestone.status) {
+    if (
+      updateMilestoneDto.status &&
+      updateMilestoneDto.status !== milestone.status
+    ) {
       if (updateMilestoneDto.status === MilestoneStatus.COMPLETED) {
         await this.notifyManagers(tenantId, {
           title: 'Milestone Completed',
@@ -121,7 +130,12 @@ export class MilestonesService {
 
   private async notifyManagers(
     tenantId: string,
-    notification: { title: string; message: string; projectId: string; type?: string },
+    notification: {
+      title: string;
+      message: string;
+      projectId: string;
+      type?: string;
+    },
   ) {
     const managers = await this.prisma.user.findMany({
       where: {
@@ -141,7 +155,10 @@ export class MilestonesService {
           link: `/projects/${notification.projectId}`,
         });
       } catch (err) {
-        console.error(`Failed to send milestone notification to user ${manager.id}`, err);
+        console.error(
+          `Failed to send milestone notification to user ${manager.id}`,
+          err,
+        );
       }
     }
   }

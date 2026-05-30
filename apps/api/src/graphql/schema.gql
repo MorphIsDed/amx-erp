@@ -1,0 +1,123 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DepartmentModel {
+  description: String
+  id: String!
+  name: String!
+}
+
+type EmployeeModel {
+  createdAt: DateTime!
+  department: DepartmentModel
+  departmentId: String
+  email: String!
+  employeeId: String!
+  firstName: String!
+  hireDate: DateTime!
+  id: ID!
+  lastName: String!
+  phone: String
+  status: String!
+  tenantId: String!
+  updatedAt: DateTime!
+}
+
+type ForecastModel {
+  actual: Float
+  month: String!
+  predicted: Float!
+}
+
+type InventoryInsightModel {
+  dailyBurnRate: Float!
+  daysRemaining: Float!
+  id: String!
+  name: String!
+  riskLevel: String!
+  sku: String!
+}
+
+type InvoiceModel {
+  amountPaid: Float!
+  clientAddress: String
+  clientEmail: String
+  clientName: String!
+  createdAt: DateTime!
+  currency: String!
+  dueDate: DateTime!
+  exchangeRate: Float!
+  id: ID!
+  invoiceNumber: String!
+  issueDate: DateTime!
+  notes: String
+  status: String!
+  subTotal: Float!
+  taxTotal: Float!
+  tenantId: String!
+  totalAmount: Float!
+  updatedAt: DateTime!
+}
+
+type PredictionPointModel {
+  date: String!
+  quantity: Float!
+}
+
+type ProductModel {
+  category: String
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  name: String!
+  price: Float!
+  reorderLevel: Float!
+  sku: String!
+  tenantId: String!
+  unit: String!
+  updatedAt: DateTime!
+}
+
+type ProjectModel {
+  actualBudget: Float!
+  createdAt: DateTime!
+  description: String
+  endDate: DateTime!
+  id: ID!
+  members: [EmployeeModel!]!
+  name: String!
+  plannedBudget: Float!
+  projectCode: String!
+  startDate: DateTime!
+  status: String!
+  tenantId: String!
+  updatedAt: DateTime!
+}
+
+type Query {
+  employee(id: String!): EmployeeModel!
+  employees(search: String, skip: Int, take: Int): [EmployeeModel!]!
+  inventoryInsights: [InventoryInsightModel!]!
+  invoice(id: String!): InvoiceModel!
+  invoices(skip: Int, status: String, take: Int): [InvoiceModel!]!
+  productStockLevel(productId: ID!): Float!
+  products: [ProductModel!]!
+  project(id: String!): ProjectModel!
+  projects(search: String, skip: Int, take: Int): [ProjectModel!]!
+  revenueForecast: [ForecastModel!]!
+  skuForecast(skuOrId: String!): SKUForecastModel!
+}
+
+type SKUForecastModel {
+  forecastType: String!
+  horizon: Float!
+  predictions: [PredictionPointModel!]!
+  productName: String!
+  sku: String!
+}

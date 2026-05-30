@@ -1091,7 +1091,7 @@ export default function ProjectDetailsPage() {
               className="w-full h-1.5 bg-surface/50 border border-border/40 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <p className="text-[10px] text-text-faint leading-relaxed font-sans mt-1">
-              Ensure this allocation percentage added to the employee's existing memberships across other active projects does not exceed the total effort limit of 100%.
+              Ensure this allocation percentage added to the employee&apos;s existing memberships across other active projects does not exceed the total effort limit of 100%.
             </p>
           </div>
 

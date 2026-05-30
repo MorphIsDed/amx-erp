@@ -16,6 +16,11 @@ const eslintConfig = defineConfig([
     "generated/**",
   ]),
   {
+    settings: {
+      react: {
+        version: "19.2.6",
+      },
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": [

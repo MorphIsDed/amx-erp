@@ -6,34 +6,6 @@ export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [syncing, setSyncing] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    setIsOnline(navigator.onLine);
-
-    const handleOnline = async () => {
-      setIsOnline(true);
-      await triggerSync();
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Initial check and sync on mount
-    if (navigator.onLine) {
-      triggerSync();
-    }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   const triggerSync = async () => {
     const queued = await OfflineStore.getQueuedRequests();
     if (queued.length === 0) return;
@@ -61,6 +33,34 @@ export function useOfflineSync() {
     setSyncing(false);
     console.log('Offline sync completed.');
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = async () => {
+      setIsOnline(true);
+      await triggerSync();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial check and sync on mount
+    if (navigator.onLine) {
+      triggerSync();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return { isOnline, syncing, triggerSync };
 }

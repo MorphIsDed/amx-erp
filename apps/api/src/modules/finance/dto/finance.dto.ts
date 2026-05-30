@@ -1,7 +1,16 @@
-import { IsString, IsNotEmpty, IsEnum, IsNumber, IsOptional, IsArray, ValidateNested, IsDateString, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { AccountType, JournalEntryStatus, AccountingPeriodStatus } from '@repo/db';
+import { AccountType } from '@repo/db';
 
 export class CreateAccountDto {
   @ApiProperty()

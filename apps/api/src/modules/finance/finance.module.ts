@@ -10,6 +10,8 @@ import { JournalEntriesController } from './journal-entries.controller';
 import { PeriodsService } from './periods.service';
 import { PeriodsController } from './periods.controller';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { InvoiceOCRService } from './invoice-ocr.service';
+import { ThreeWayMatchingService } from './three-way-matching.service';
 
 @Module({
   imports: [PrismaModule],
@@ -26,6 +28,8 @@ import { PrismaModule } from '../../prisma/prisma.module';
     AccountsService,
     JournalEntriesService,
     PeriodsService,
+    InvoiceOCRService,
+    ThreeWayMatchingService,
   ],
   exports: [
     InvoicesService,
@@ -33,6 +37,8 @@ import { PrismaModule } from '../../prisma/prisma.module';
     AccountsService,
     JournalEntriesService,
     PeriodsService,
+    InvoiceOCRService,
+    ThreeWayMatchingService,
   ],
 })
 export class FinanceModule {}

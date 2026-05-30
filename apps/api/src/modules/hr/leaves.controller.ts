@@ -1,11 +1,26 @@
-import { Controller, Get, Post, Patch, Body, Param, Headers, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Headers,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { LeavesService } from './leaves.service';
 import { CreateLeaveDto, UpdateLeaveStatusDto } from './dto/hr.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '@repo/db';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiHeader,
+} from '@nestjs/swagger';
 
 @ApiTags('HR - Leaves')
 @ApiBearerAuth()

@@ -1,7 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CrudService } from '../../common/services/crud.service';
-import { JournalEntry, JournalEntryStatus, AccountingPeriodStatus, AccountType } from '@repo/db';
+import {
+  JournalEntry,
+  JournalEntryStatus,
+  AccountingPeriodStatus,
+  AccountType,
+} from '@repo/db';
 import { CreateJournalEntryDto } from './dto/finance.dto';
 
 @Injectable()
@@ -11,6 +20,7 @@ export class JournalEntriesService extends CrudService<JournalEntry> {
   }
 
   async validateJournalEntry(dto: CreateJournalEntryDto): Promise<void> {
+    await Promise.resolve();
     let totalDebit = 0;
     let totalCredit = 0;
 
@@ -42,7 +52,9 @@ export class JournalEntriesService extends CrudService<JournalEntry> {
     }
 
     if (period.status === AccountingPeriodStatus.CLOSED && !adminOverride) {
-      throw new BadRequestException('Cannot post to a closed accounting period without administrative override.');
+      throw new BadRequestException(
+        'Cannot post to a closed accounting period without administrative override.',
+      );
     }
 
     // 2. Validate debits equal credits
@@ -80,7 +92,9 @@ export class JournalEntriesService extends CrudService<JournalEntry> {
         });
 
         if (!account || account.tenantId !== tenantId) {
-          throw new NotFoundException(`Account ${line.accountId} not found or unauthorized.`);
+          throw new NotFoundException(
+            `Account ${line.accountId} not found or unauthorized.`,
+          );
         }
 
         let newBalance = account.balance;

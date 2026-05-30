@@ -88,7 +88,7 @@ export class NotificationListener {
 
   @OnEvent('leave.approved', { async: true })
   async handleLeaveApproved(payload: any) {
-    const { leave, tenantId, userId } = payload;
+    const { leave, tenantId } = payload;
     await this.notificationService.create({
       userId: leave.employeeId, // Notify employee
       tenantId,
