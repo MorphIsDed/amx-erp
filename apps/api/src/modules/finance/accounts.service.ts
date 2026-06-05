@@ -11,7 +11,7 @@ import { CreateAccountDto } from './dto/finance.dto';
 @Injectable()
 export class AccountsService extends CrudService<Account> {
   constructor(private prisma: PrismaService) {
-    super(prisma.account);
+    super(prisma.account, false);
   }
 
   async createAccount(

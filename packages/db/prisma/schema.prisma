@@ -149,6 +149,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Department {
@@ -163,6 +165,8 @@ model Department {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Employee {
@@ -244,6 +248,8 @@ model InvoiceItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
 }
 
 model Transaction {
@@ -279,6 +285,8 @@ model Notification {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model NotificationPreference {
@@ -291,6 +299,7 @@ model NotificationPreference {
   tenantId  String
 
   @@unique([userId, eventType, channel])
+  @@index([tenantId])
 }
 
 model NotificationDelivery {
@@ -318,6 +327,8 @@ model WebhookSubscription {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model ActivityLog {
@@ -334,6 +345,8 @@ model ActivityLog {
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([tenantId])
 }
 
 model Vendor {
@@ -370,6 +383,8 @@ model Warehouse {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Product {
@@ -417,6 +432,8 @@ model StockMovement {
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([tenantId])
 }
 
 model PurchaseOrder {
@@ -460,6 +477,8 @@ model PurchaseOrderItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([purchaseOrderId])
 }
 
 model PayrollRun {
@@ -476,6 +495,8 @@ model PayrollRun {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Payslip {
@@ -499,6 +520,9 @@ model Payslip {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 enum AccountType {
@@ -564,6 +588,8 @@ model JournalEntry {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model JournalLine {
@@ -595,6 +621,8 @@ model AccountingPeriod {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Leave {
@@ -613,6 +641,9 @@ model Leave {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 enum ProjectStatus {
@@ -681,6 +712,9 @@ model Milestone {
   status      MilestoneStatus @default(PENDING)
 
   tasks       Task[]
+
+  @@index([tenantId])
+  @@index([projectId])
 }
 
 model Task {
@@ -703,6 +737,11 @@ model Task {
 
   dependencies       TaskDependency[] @relation("predecessor")
   dependents         TaskDependency[] @relation("successor")
+
+  @@index([tenantId])
+  @@index([projectId])
+  @@index([milestoneId])
+  @@index([assignedEmployeeId])
 }
 
 model ProjectMember {
@@ -735,5 +774,6 @@ model UserDashboardLayout {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, tenantId])
+  @@index([tenantId])
 }
 

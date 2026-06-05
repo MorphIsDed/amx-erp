@@ -10,6 +10,9 @@ import {
 } from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { Role } from '@repo/db';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 class SubscribeDto {
@@ -20,7 +23,8 @@ class SubscribeDto {
 
 @ApiTags('Outbound Webhooks Engine')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN, Role.MANAGER)
 @Controller('webhooks')
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}

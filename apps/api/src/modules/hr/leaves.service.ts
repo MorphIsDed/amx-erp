@@ -11,7 +11,7 @@ export class LeavesService extends CrudService<Leave> {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
   ) {
-    super(prisma.leave);
+    super(prisma.leave, false);
   }
 
   async createLeave(

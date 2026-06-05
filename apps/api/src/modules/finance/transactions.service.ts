@@ -6,6 +6,6 @@ import { Transaction } from '@repo/db';
 @Injectable()
 export class TransactionsService extends CrudService<Transaction> {
   constructor(prisma: PrismaService) {
-    super(prisma.transaction);
+    super(prisma.transaction, false);
   }
 }

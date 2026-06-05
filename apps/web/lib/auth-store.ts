@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { API_BASE_URL } from "./api-config";
 
 export type UserRole = "admin" | "hr" | "finance" | "inventory" | "viewer";
 
@@ -15,7 +16,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => Promise<boolean>;
+  login: (email: string, password?: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
   initialize: () => void;
 }
@@ -48,10 +49,57 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: async (email: string, role: UserRole) => {
+  login: async (email: string, password?: string, role: UserRole = "admin") => {
     set({ isLoading: true });
     
-    // Simulate API request delay
+    // Attempt real backend authentication first
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: password || "password123" }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const backendUser = data.user;
+        const token = data.access_token;
+
+        // Map backend Role enum to UserRole type
+        let mappedRole: UserRole = "viewer";
+        if (backendUser.role === "ADMIN") mappedRole = "admin";
+        else if (backendUser.role === "HR") mappedRole = "hr";
+        else if (backendUser.role === "FINANCE") mappedRole = "finance";
+        else if (backendUser.role === "INVENTORY") mappedRole = "inventory";
+
+        const user: User = {
+          id: backendUser.id,
+          name: backendUser.name,
+          email: backendUser.email,
+          role: mappedRole,
+          companyName: "AMX Enterprise Solutions",
+        };
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("amx_user", JSON.stringify(user));
+          localStorage.setItem("amx_token", token);
+          localStorage.setItem("token", token);
+        }
+
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        return true;
+      }
+    } catch (err) {
+      console.warn("Backend auth failed, falling back to mock login:", err);
+    }
+
+    // Fallback: Simulated API request delay & Mock Login
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const name = email.split("@")[0].replace(".", " ");

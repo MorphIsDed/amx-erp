@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/api-config";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -54,6 +55,9 @@ export default function RegisterPage() {
       });
 
       if (!response.ok) throw new Error("Registration failed");
+
+      // Auto login with the newly created admin account
+      await useAuthStore.getState().login(formData.adminEmail, formData.adminPassword, "admin");
 
       setSuccess(true);
       setTimeout(() => {

@@ -7,7 +7,7 @@ import { CreatePeriodDto } from './dto/finance.dto';
 @Injectable()
 export class PeriodsService extends CrudService<AccountingPeriod> {
   constructor(private prisma: PrismaService) {
-    super(prisma.accountingPeriod);
+    super(prisma.accountingPeriod, false);
   }
 
   async createPeriod(

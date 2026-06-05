@@ -1,7 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 
 export class CrudService<Entity> {
-  constructor(protected readonly model: any) {}
+  constructor(
+    protected readonly model: any,
+    protected readonly hasSoftDelete: boolean = false,
+  ) {}
 
   async create(tenantId: string, data: any): Promise<Entity> {
     return await this.model.create({
@@ -17,8 +20,13 @@ export class CrudService<Entity> {
     query?: any,
   ): Promise<{ data: Entity[]; meta?: any }> {
     const { skip, take, orderBy, where } = query || {};
+    const whereClause: any = { ...where, tenantId };
+    if (this.hasSoftDelete) {
+      whereClause.deletedAt = null;
+    }
+
     const data = await this.model.findMany({
-      where: { ...where, tenantId, deletedAt: null },
+      where: whereClause,
       skip: skip ? Number(skip) : undefined,
       take: take ? Number(take) : undefined,
       orderBy,
@@ -27,8 +35,13 @@ export class CrudService<Entity> {
   }
 
   async findOne(tenantId: string, id: string): Promise<{ data: Entity }> {
+    const whereClause: any = { id, tenantId };
+    if (this.hasSoftDelete) {
+      whereClause.deletedAt = null;
+    }
+
     const data = await this.model.findFirst({
-      where: { id, tenantId, deletedAt: null },
+      where: whereClause,
     });
 
     if (!data) {
@@ -43,8 +56,13 @@ export class CrudService<Entity> {
     id: string,
     data: any,
   ): Promise<{ data: Entity }> {
+    const whereClause: any = { id, tenantId };
+    if (this.hasSoftDelete) {
+      whereClause.deletedAt = null;
+    }
+
     const existing = await this.model.findFirst({
-      where: { id, tenantId, deletedAt: null },
+      where: whereClause,
     });
 
     if (!existing) {
@@ -60,17 +78,28 @@ export class CrudService<Entity> {
   }
 
   async remove(tenantId: string, id: string): Promise<void> {
+    const whereClause: any = { id, tenantId };
+    if (this.hasSoftDelete) {
+      whereClause.deletedAt = null;
+    }
+
     const existing = await this.model.findFirst({
-      where: { id, tenantId, deletedAt: null },
+      where: whereClause,
     });
 
     if (!existing) {
       throw new NotFoundException(`Resource with ID ${id} not found`);
     }
 
-    await this.model.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    if (this.hasSoftDelete) {
+      await this.model.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    } else {
+      await this.model.delete({
+        where: { id },
+      });
+    }
   }
 }

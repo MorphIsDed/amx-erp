@@ -16,7 +16,7 @@ import { CreateJournalEntryDto } from './dto/finance.dto';
 @Injectable()
 export class JournalEntriesService extends CrudService<JournalEntry> {
   constructor(private prisma: PrismaService) {
-    super(prisma.journalEntry);
+    super(prisma.journalEntry, false);
   }
 
   async validateJournalEntry(dto: CreateJournalEntryDto): Promise<void> {

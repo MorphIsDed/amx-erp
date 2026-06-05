@@ -84,7 +84,7 @@ export default function LoginPage() {
       );
       const activeRole = matchingAccount ? matchingAccount.role : selectedRole;
 
-      const success = await login(email, activeRole);
+      const success = await login(email, password, activeRole);
       if (success) {
         Cookies.set("amx_auth", "true", { expires: 7 });
         Cookies.set("amx_role", activeRole, { expires: 7 });

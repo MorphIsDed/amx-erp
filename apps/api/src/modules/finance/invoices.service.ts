@@ -12,7 +12,7 @@ export class InvoicesService extends CrudService<Invoice> {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
   ) {
-    super(prisma.invoice);
+    super(prisma.invoice, false);
   }
 
   async create(tenantId: string, dto: CreateInvoiceDto, userId?: string) {
