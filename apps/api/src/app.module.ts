@@ -20,6 +20,7 @@ import { IdempotencyModule } from './common/idempotency/idempotency.module';
 import { AppGraphQLModule } from './graphql/graphql.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { ObservabilityModule } from './common/observability/observability.module';
 
 import { SecretProvider } from './common/secrets/secret.provider';
 
@@ -55,6 +56,7 @@ import { SecretProvider } from './common/secrets/secret.provider';
     AppGraphQLModule,
     ProjectsModule,
     WebhooksModule,
+    ObservabilityModule,
   ],
   providers: [
     {

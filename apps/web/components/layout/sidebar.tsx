@@ -34,6 +34,8 @@ export default function Sidebar({
     import("js-cookie").then((Cookies) => {
       Cookies.default.remove("amx_auth");
       Cookies.default.remove("amx_role");
+      Cookies.default.remove("amx_token");
+      Cookies.default.remove("amx_tenant");
     });
     logout();
     router.push("/login");
@@ -62,7 +64,10 @@ export default function Sidebar({
       },
       {
         label: "SYSTEM",
-        items: [{ label: "Settings", icon: Settings, href: "/settings" }],
+        items: [
+          { label: "Operations Center", icon: ShieldCheck, href: "/operations", roles: ["admin"] },
+          { label: "Settings", icon: Settings, href: "/settings" }
+        ],
       },
     ];
 

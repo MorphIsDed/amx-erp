@@ -1,38 +1,42 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { RichInventoryItem } from "@/lib/store";
-import { createInventoryItem, updateInventoryStock } from "@/app/actions";
+import { useState } from "react";
+import { Product, StockMovement } from "@/types/product";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Button from "@/components/ui/button";
 import { 
   Plus, 
   Search, 
-  Filter, 
   Download, 
-  MoreHorizontal,
-  Package,
-  History,
-  AlertTriangle,
-  MoveHorizontal,
-  Warehouse,
-  Boxes,
-  ArrowRight,
+  Package, 
+  AlertTriangle, 
+  Warehouse, 
+  Boxes, 
   TrendingUp,
-  X
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
 import { motion, AnimatePresence } from "framer-motion";
 import { exportToCsv } from "@/lib/export-utils";
+import { useList, useCreate } from "@/hooks/use-crud";
+import { ApiClient } from "@/services/api-client";
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
-const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
+const container: any = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+const item: any = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } };
 
-export default function InventoryClient({ initialInventory }: { initialInventory: any[] }) {
-  const [items, setItems] = useState<any[]>(initialInventory);
-  const [isPending, startTransition] = useTransition();
-  
+export default function InventoryClient() {
+  // Real inventory data fetching
+  const { data: productsRes, isLoading: isProductsLoading, isError, refetch } = useList<Product>('inventory/products');
+  const products = productsRes?.data || [];
+
+  // Real warehouses fetching
+  const { data: warehousesRes, isLoading: isWarehousesLoading } = useList<{ id: string; name: string; location?: string }>('inventory/warehouses');
+  const warehouses = warehousesRes?.data || [];
+
+  // Mutations
+  const createProductMutation = useCreate<Product>('inventory/products');
+
   // Table search & filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -44,42 +48,57 @@ export default function InventoryClient({ initialInventory }: { initialInventory
   const itemsPerPage = 5;
 
   // Selected item for stock adjustment
-  const [selectedProduct, setSelectedProduct] = useState<RichInventoryItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [adjustmentValue, setAdjustmentValue] = useState("");
+  const [adjustingWarehouseId, setAdjustingWarehouseId] = useState("");
+  const [isAdjusting, setIsAdjusting] = useState(false);
   
   // Add new product modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
     sku: "",
-    category: "Electronics" as any,
+    category: "Electronics",
     price: "",
-    stock: "",
-    warehouse: "Mumbai Hub" as any,
+    stock: "10",
+    warehouseId: "",
   });
 
   const [successToast, setSuccessToast] = useState("");
 
+  // Dynamically map categories from products
+  const categories = Array.from(new Set(products.map(p => p.category).filter((c): c is string => !!c)));
+
+  // Extract vendors dynamically from product list
+  const vendors = Array.from(
+    new Map(
+      products
+        .filter(p => p.vendor)
+        .map(p => [p.vendor!.id, p.vendor!.name])
+    ).entries()
+  ).map(([id, name]) => ({ id, name }));
+
   // Statistics counters
-  const totalValuation = items.reduce((sum, item) => sum + (item.price * item.stock), 0);
-  const activeSKUs = items.length;
-  const lowStockCount = items.filter(i => i.stock > 0 && i.stock <= 25).length;
-  const outOfStockCount = items.filter(i => i.stock === 0).length;
+  const totalValuation = products.reduce((sum, p) => sum + (p.price * (p as any).stock), 0);
+  const activeSKUs = products.length;
+  const lowStockCount = products.filter(p => (p as any).stock > 0 && (p as any).stock <= 25).length;
+  const outOfStockCount = products.filter(p => (p as any).stock === 0).length;
 
   // Filter products list
-  const filteredProducts = items.filter(p => {
+  const filteredProducts = products.filter(p => {
     const matchesSearch = 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
-    const matchesWarehouse = warehouseFilter === "all" || p.warehouse === warehouseFilter;
+    const matchesWarehouse = warehouseFilter === "all" || (p as any).warehouseId === warehouseFilter;
     
     let matchesStatus = true;
-    if (stockStatusFilter === "inStock") matchesStatus = p.stock > 25;
-    else if (stockStatusFilter === "lowStock") matchesStatus = p.stock > 0 && p.stock <= 25;
-    else if (stockStatusFilter === "outOfStock") matchesStatus = p.stock === 0;
+    const stock = (p as any).stock || 0;
+    if (stockStatusFilter === "inStock") matchesStatus = stock > 25;
+    else if (stockStatusFilter === "lowStock") matchesStatus = stock > 0 && stock <= 25;
+    else if (stockStatusFilter === "outOfStock") matchesStatus = stock === 0;
 
     return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus;
   });
@@ -97,77 +116,93 @@ export default function InventoryClient({ initialInventory }: { initialInventory
     }
   };
 
-  // Adjust stock level handler (Optimistic update)
-  const handleStockAdjustment = (e: React.FormEvent) => {
+  // Adjust stock level handler
+  const handleStockAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct || !adjustmentValue) return;
+    if (!selectedProduct || !adjustmentValue || !adjustingWarehouseId) return;
 
-    const newStock = parseInt(adjustmentValue);
-    if (isNaN(newStock) || newStock < 0) return;
+    const targetStock = parseInt(adjustmentValue);
+    if (isNaN(targetStock) || targetStock < 0) return;
 
-    startTransition(async () => {
-      const updated: RichInventoryItem = {
-        ...selectedProduct,
-        stock: newStock,
-        lastUpdated: new Date().toISOString().split("T")[0],
-      };
+    const currentStock = (selectedProduct as any).stock || 0;
+    const diff = targetStock - currentStock;
+    if (diff === 0) {
+      setIsAdjustModalOpen(false);
+      return;
+    }
 
-      setItems(prev => prev.map(item => item.id === selectedProduct.id ? updated : item));
+    setIsAdjusting(true);
+    const movementType = diff > 0 ? 'IN' : 'OUT';
+    const quantity = Math.abs(diff);
 
-      await updateInventoryStock(selectedProduct.id, newStock);
+    try {
+      await ApiClient.post('/inventory/movements', {
+        productId: selectedProduct.id,
+        warehouseId: adjustingWarehouseId,
+        type: movementType,
+        quantity,
+        reason: 'Stock level manually adjusted in UI dashboard',
+      });
 
-      setSuccessToast(`Stock level for "${selectedProduct.name}" updated to ${newStock} units.`);
+      setSuccessToast(`Stock level for "${selectedProduct.name}" updated successfully.`);
       setTimeout(() => setSuccessToast(""), 4000);
-    });
-
-    setIsAdjustModalOpen(false);
-    setSelectedProduct(null);
-    setAdjustmentValue("");
+      refetch();
+      setIsAdjustModalOpen(false);
+      setSelectedProduct(null);
+      setAdjustmentValue("");
+    } catch (err) {
+      console.error("Failed to adjust stock:", err);
+    } finally {
+      setIsAdjusting(false);
+    }
   };
 
-  // Onboard new product (Optimistic update)
-  const handleAddProduct = (e: React.FormEvent) => {
+  // Onboard new product
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.sku || !newProduct.price || !newProduct.stock) return;
+    if (!newProduct.name || !newProduct.sku || !newProduct.price || !newProduct.warehouseId) return;
 
-    startTransition(async () => {
-      const itemToAdd: RichInventoryItem = {
-        id: `optimistic_${Date.now()}`,
+    const warehouseId = newProduct.warehouseId;
+    const initialQty = parseInt(newProduct.stock) || 0;
+
+    try {
+      // Step 1: Create product
+      const created = await createProductMutation.mutateAsync({
         name: newProduct.name,
         sku: newProduct.sku,
         category: newProduct.category,
         price: parseFloat(newProduct.price) || 0,
-        stock: parseInt(newProduct.stock) || 0,
-        warehouse: newProduct.warehouse,
-        lastUpdated: new Date().toISOString().split("T")[0],
-      };
-
-      setItems(prev => [itemToAdd, ...prev]);
-
-      await createInventoryItem({
-        name: itemToAdd.name,
-        sku: itemToAdd.sku,
-        category: itemToAdd.category,
-        price: itemToAdd.price,
-        stock: itemToAdd.stock,
-        warehouse: itemToAdd.warehouse,
-        lastUpdated: itemToAdd.lastUpdated,
+        unit: 'pcs',
+        vendorId: vendors[0]?.id || null, // Default to first vendor if available
       });
 
-      setSuccessToast(`Product "${newProduct.name}" successfully added to inventory catalog.`);
-      setTimeout(() => setSuccessToast(""), 4000);
-    });
+      // Step 2: Record initial stock movement if opening stock > 0
+      if (initialQty > 0) {
+        await ApiClient.post('/inventory/movements', {
+          productId: created.data.id,
+          warehouseId,
+          type: 'IN',
+          quantity: initialQty,
+          reason: 'Initial opening stock receipt',
+        });
+      }
 
-    setIsAddModalOpen(false);
-    setNewProduct({
-      name: "",
-      sku: "",
-      category: "Electronics",
-      price: "",
-      stock: "",
-      warehouse: "Mumbai Hub",
-    });
-    setCurrentPage(1); // Jump to page 1 to see the new item
+      setSuccessToast(`Product "${newProduct.name}" successfully added to catalog.`);
+      setTimeout(() => setSuccessToast(""), 4000);
+      refetch();
+      setIsAddModalOpen(false);
+      setNewProduct({
+        name: "",
+        sku: "",
+        category: "Electronics",
+        price: "",
+        stock: "10",
+        warehouseId: "",
+      });
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Failed to onboard product:", err);
+    }
   };
 
   return (
@@ -214,10 +249,10 @@ export default function InventoryClient({ initialInventory }: { initialInventory
 
       {/* METRICS ROW */}
       <motion.div variants={container} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MiniStatCard title="Stock Valuation" value={`₹${(totalValuation / 1000000).toFixed(2)}M`} icon={TrendingUp} color="text-primary" gradient="from-primary/20 to-primary/5" />
-        <MiniStatCard title="Active SKUs" value={activeSKUs.toString()} icon={Boxes} color="text-info" gradient="from-info/20 to-info/5" />
-        <MiniStatCard title="Low Stock Items" value={lowStockCount.toString()} icon={AlertTriangle} color="text-warning" gradient="from-warning/20 to-warning/5" />
-        <MiniStatCard title="Out of Stock" value={outOfStockCount.toString()} icon={Warehouse} color="text-rose" gradient="from-danger/20 to-danger/5" />
+        <MiniStatCard title="Stock Valuation" value={isProductsLoading ? "..." : `₹${(totalValuation / 1000000).toFixed(2)}M`} icon={TrendingUp} color="text-primary" gradient="from-primary/20 to-primary/5" />
+        <MiniStatCard title="Active SKUs" value={isProductsLoading ? "..." : activeSKUs.toString()} icon={Boxes} color="text-info" gradient="from-info/20 to-info/5" />
+        <MiniStatCard title="Low Stock Items" value={isProductsLoading ? "..." : lowStockCount.toString()} icon={AlertTriangle} color="text-warning" gradient="from-warning/20 to-warning/5" />
+        <MiniStatCard title="Out of Stock" value={isProductsLoading ? "..." : outOfStockCount.toString()} icon={Warehouse} color="text-rose" gradient="from-danger/20 to-danger/5" />
       </motion.div>
 
       {/* FILTERS PANEL */}
@@ -245,10 +280,9 @@ export default function InventoryClient({ initialInventory }: { initialInventory
                 className="bg-card border border-border/30 rounded-xl px-3 py-2 text-xs text-text-main focus:border-primary/50 outline-none cursor-pointer"
               >
                 <option value="all">All Categories</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Office">Office</option>
-                <option value="Furniture">Furniture</option>
-                <option value="Networking">Networking</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
 
               <select
@@ -257,9 +291,9 @@ export default function InventoryClient({ initialInventory }: { initialInventory
                 className="bg-card border border-border/30 rounded-xl px-3 py-2 text-xs text-text-main focus:border-primary/50 outline-none cursor-pointer"
               >
                 <option value="all">All Warehouses</option>
-                <option value="Mumbai Hub">Mumbai Hub</option>
-                <option value="Bengaluru Facility">Bengaluru Facility</option>
-                <option value="Delhi Depot">Delhi Depot</option>
+                {warehouses.map(w => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
               </select>
 
               <select
@@ -286,127 +320,147 @@ export default function InventoryClient({ initialInventory }: { initialInventory
             <p className="text-xs text-text-faint mt-1">Primary warehouse ledger listing available quantities and active catalog prices.</p>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-border/15 bg-card/40 text-text-faint font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">SKU</th>
-                    <th className="px-6 py-4">Product Name</th>
-                    <th className="px-6 py-4">Category</th>
-                    <th className="px-6 py-4">Warehouse</th>
-                    <th className="px-6 py-4">Valuation Price</th>
-                    <th className="px-6 py-4">Stock Level</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/10">
-                  <AnimatePresence mode="popLayout">
-                    {paginatedProducts.map((p) => {
-                      const isLow = p.stock > 0 && p.stock <= 25;
-                      const isOut = p.stock === 0;
-                      return (
-                        <motion.tr 
-                          key={p.id}
-                          layout
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="hover:bg-card/30 transition-colors group"
-                        >
-                          <td className="px-6 py-4">
-                            <span className="text-xs font-mono font-bold text-primary px-2.5 py-1 bg-primary/5 rounded border border-primary/10">
-                              {p.sku}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded bg-surface border border-border/30 flex items-center justify-center text-text-muted group-hover:text-primary transition-colors">
-                                <Package className="w-4 h-4" />
-                              </div>
-                              <span className="text-sm font-semibold text-text-main">{p.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-text-muted">{p.category}</td>
-                          <td className="px-6 py-4 text-text-muted">
-                            <div className="flex items-center gap-1.5">
-                              <Warehouse className="w-3.5 h-3.5 text-text-faint" />
-                              {p.warehouse}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-text-muted font-mono">₹{p.price.toLocaleString("en-IN")}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col max-w-[120px]">
-                              <span className="text-xs font-bold text-text-main font-mono">{p.stock} units</span>
-                              <div className="w-24 h-1 bg-border/20 rounded-full mt-1 overflow-hidden">
-                                <div 
-                                  className={cn(
-                                    "h-full rounded-full",
-                                    isOut ? "bg-danger" : isLow ? "bg-warning" : "bg-primary"
-                                  )} 
-                                  style={{ width: `${Math.min(100, (p.stock / 150) * 100)}%` }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => { setSelectedProduct(p); setAdjustmentValue(p.stock.toString()); setIsAdjustModalOpen(true); }}
-                                className="text-[10px] uppercase font-bold py-1 h-7 cursor-pointer"
-                              >
-                                Adjust Stock
-                              </Button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      );
-                    })}
-                  </AnimatePresence>
-
-                  {filteredProducts.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-10 text-center text-text-faint font-medium">
-                        No product inventories found matching the current selections.
-                      </td>
+            {isProductsLoading ? (
+              <div className="p-12 text-center text-text-faint flex flex-col items-center justify-center gap-2">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span>Retrieving inventory ledger catalog...</span>
+              </div>
+            ) : isError ? (
+              <div className="p-12 text-center text-danger font-medium">
+                Failed to load products. Please check your database state.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border/15 bg-card/40 text-text-faint font-semibold uppercase tracking-wider">
+                      <th className="px-6 py-4">SKU</th>
+                      <th className="px-6 py-4">Product Name</th>
+                      <th className="px-6 py-4">Category</th>
+                      <th className="px-6 py-4">Location</th>
+                      <th className="px-6 py-4">Valuation Price</th>
+                      <th className="px-6 py-4">Stock Level</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border/10">
+                    <AnimatePresence mode="popLayout">
+                      {paginatedProducts.map((p) => {
+                        const stock = (p as any).stock || 0;
+                        const isLow = stock > 0 && stock <= 25;
+                        const isOut = stock === 0;
+                        const warehouseName = warehouses.find(w => w.id === (p as any).warehouseId)?.name || "Main Hub — Mumbai";
+                        return (
+                          <motion.tr 
+                            key={p.id}
+                            layout
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="hover:bg-card/30 transition-colors group"
+                          >
+                            <td className="px-6 py-4">
+                              <span className="text-xs font-mono font-bold text-primary px-2.5 py-1 bg-primary/5 rounded border border-primary/10">
+                                {p.sku}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded bg-surface border border-border/30 flex items-center justify-center text-text-muted group-hover:text-primary transition-colors">
+                                  <Package className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-semibold text-text-main">{p.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-text-muted">{p.category || "Unassigned"}</td>
+                            <td className="px-6 py-4 text-text-muted">
+                              <div className="flex items-center gap-1.5">
+                                <Warehouse className="w-3.5 h-3.5 text-text-faint" />
+                                {warehouseName}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-text-muted font-mono">₹{p.price.toLocaleString("en-IN")}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col max-w-[120px]">
+                                <span className="text-xs font-bold text-text-main font-mono">{stock} units</span>
+                                <div className="w-24 h-1 bg-border/20 rounded-full mt-1 overflow-hidden">
+                                  <div 
+                                    className={cn(
+                                      "h-full rounded-full",
+                                      isOut ? "bg-danger" : isLow ? "bg-warning" : "bg-primary"
+                                    )} 
+                                    style={{ width: `${Math.min(100, (stock / 150) * 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => { 
+                                    setSelectedProduct(p); 
+                                    setAdjustmentValue(stock.toString()); 
+                                    setAdjustingWarehouseId((p as any).warehouseId || warehouses[0]?.id || "");
+                                    setIsAdjustModalOpen(true); 
+                                  }}
+                                  className="text-[10px] uppercase font-bold py-1 h-7 cursor-pointer"
+                                >
+                                  Adjust Stock
+                                </Button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
+
+                    {filteredProducts.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-10 text-center text-text-faint font-medium">
+                          No product inventories found matching the current selections.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* PAGINATION PANEL */}
-            <div className="p-4 border-t border-border/15 flex items-center justify-between gap-4 text-text-muted">
-              <span className="text-[11px] font-medium">
-                Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {filteredProducts.length} SKU codes
-              </span>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  className="px-2.5 py-1 text-[11px]"
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1 font-mono text-xs font-bold text-text-main px-2">
-                  <span>{currentPage}</span>
-                  <span className="text-text-faint">/</span>
-                  <span className="text-text-faint">{totalPages}</span>
+            {!isProductsLoading && !isError && (
+              <div className="p-4 border-t border-border/15 flex items-center justify-between gap-4 text-text-muted">
+                <span className="text-[11px] font-medium">
+                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {filteredProducts.length} SKU codes
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="px-2.5 py-1 text-[11px]"
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1 font-mono text-xs font-bold text-text-main px-2">
+                    <span>{currentPage}</span>
+                    <span className="text-text-faint">/</span>
+                    <span className="text-text-faint">{totalPages}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="px-2.5 py-1 text-[11px]"
+                  >
+                    Next
+                  </Button>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  className="px-2.5 py-1 text-[11px]"
-                >
-                  Next
-                </Button>
               </div>
-            </div>
+            )}
 
           </CardContent>
         </Card>
@@ -421,29 +475,46 @@ export default function InventoryClient({ initialInventory }: { initialInventory
         {selectedProduct && (
           <form onSubmit={handleStockAdjustment} className="space-y-4">
             <div className="p-3 bg-surface/50 border border-border/20 rounded-xl flex justify-between text-xs text-text-muted">
-              <span>Current Level: <strong>{selectedProduct.stock} units</strong></span>
-              <span>Warehouse: <strong>{selectedProduct.warehouse}</strong></span>
+              <span>Current Level: <strong>{(selectedProduct as any).stock || 0} units</strong></span>
+              <span>Default Location: <strong>{warehouses.find(w => w.id === (selectedProduct as any).warehouseId)?.name || "Mumbai Hub"}</strong></span>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-text-muted">Target Quantity</label>
-              <input
-                type="number"
-                required
-                min="0"
-                value={adjustmentValue}
-                onChange={(e) => setAdjustmentValue(e.target.value)}
-                placeholder="e.g. 150"
-                className="w-full bg-surface/50 border border-border/40 rounded-xl px-3 py-2 text-xs text-text-main placeholder:text-text-faint/60 focus:border-primary/50 outline-none transition-all"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-muted">Adjustment Location</label>
+                <select
+                  required
+                  value={adjustingWarehouseId}
+                  onChange={(e) => setAdjustingWarehouseId(e.target.value)}
+                  className="w-full bg-surface/50 border border-border/40 rounded-xl px-3 py-2 text-xs text-text-main focus:border-primary/50 outline-none cursor-pointer"
+                >
+                  <option value="" disabled>Select Warehouse</option>
+                  {warehouses.map(w => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-muted">Target Quantity</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={adjustmentValue}
+                  onChange={(e) => setAdjustmentValue(e.target.value)}
+                  placeholder="e.g. 150"
+                  className="w-full bg-surface/50 border border-border/40 rounded-xl px-3 py-2 text-xs text-text-main placeholder:text-text-faint/60 focus:border-primary/50 outline-none transition-all"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-3 border-t border-border/10 justify-end">
               <Button type="button" variant="outline" onClick={() => { setIsAdjustModalOpen(false); setSelectedProduct(null); }}>
                 Cancel
               </Button>
-              <Button type="submit">
-                Apply Stock Level
+              <Button type="submit" disabled={isAdjusting}>
+                {isAdjusting ? "Adjusting..." : "Apply Stock Level"}
               </Button>
             </div>
           </form>
@@ -493,6 +564,9 @@ export default function InventoryClient({ initialInventory }: { initialInventory
                 <option value="Office">Office</option>
                 <option value="Furniture">Furniture</option>
                 <option value="Networking">Networking</option>
+                <option value="Peripherals">Peripherals</option>
+                <option value="Laptops">Laptops</option>
+                <option value="Monitors">Monitors</option>
               </select>
             </div>
           </div>
@@ -525,13 +599,15 @@ export default function InventoryClient({ initialInventory }: { initialInventory
             <div className="space-y-1.5 col-span-1">
               <label className="text-xs font-semibold text-text-muted">Target Warehouse</label>
               <select
-                value={newProduct.warehouse}
-                onChange={(e) => setNewProduct({...newProduct, warehouse: e.target.value as any})}
+                required
+                value={newProduct.warehouseId}
+                onChange={(e) => setNewProduct({...newProduct, warehouseId: e.target.value})}
                 className="w-full bg-surface/50 border border-border/40 rounded-xl px-3 py-2 text-xs text-text-main focus:border-primary/50 outline-none cursor-pointer"
               >
-                <option value="Mumbai Hub">Mumbai Hub</option>
-                <option value="Bengaluru Facility">Bengaluru Facility</option>
-                <option value="Delhi Depot">Delhi Depot</option>
+                <option value="" disabled>Select Location</option>
+                {warehouses.map(w => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -540,8 +616,8 @@ export default function InventoryClient({ initialInventory }: { initialInventory
             <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Onboard SKU
+            <Button type="submit" disabled={createProductMutation.isPending}>
+              {createProductMutation.isPending ? "Adding SKU..." : "Onboard SKU"}
             </Button>
           </div>
         </form>

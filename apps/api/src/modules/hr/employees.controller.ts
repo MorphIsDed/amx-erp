@@ -52,6 +52,13 @@ export class EmployeesController {
     });
   }
 
+  @Get('departments')
+  @Roles(Role.ADMIN, Role.HR, Role.MANAGER)
+  @ApiOperation({ summary: 'Get all departments' })
+  findDepartments(@Request() req: any) {
+    return this.employeesService.findDepartments(req.user.tenantId);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.HR, Role.MANAGER)
   @ApiOperation({ summary: 'Get an employee by ID' })

@@ -165,6 +165,13 @@ export class PayrollService {
   }
 
   async finalizePayroll(tenantId: string, id: string) {
+    const existing = await this.prisma.payrollRun.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) {
+      throw new NotFoundException('Payroll run not found');
+    }
+
     const run = await this.prisma.payrollRun.update({
       where: { id },
       data: { status: PayrollStatus.COMPLETED },
@@ -173,7 +180,7 @@ export class PayrollService {
 
     // Update all payslips to PAID
     await this.prisma.payslip.updateMany({
-      where: { payrollRunId: id },
+      where: { payrollRunId: id, tenantId },
       data: { status: PayslipStatus.PAID, paidAt: new Date() },
     });
 

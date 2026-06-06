@@ -6,14 +6,26 @@ export function useList<T>(resource: string, queryParams?: string) {
   
   return useQuery({
     queryKey: [resource, queryParams],
-    queryFn: () => ApiClient.get<{ data: T[] }>(endpoint),
+    queryFn: async () => {
+      const res = await ApiClient.get<any>(endpoint);
+      if (res && typeof res === 'object' && 'data' in res) {
+        return res as { data: T[] };
+      }
+      return { data: Array.isArray(res) ? res : [] } as { data: T[] };
+    },
   });
 }
 
 export function useGet<T>(resource: string, id: string) {
   return useQuery({
     queryKey: [resource, id],
-    queryFn: () => ApiClient.get<{ data: T }>(`/${resource}/${id}`),
+    queryFn: async () => {
+      const res = await ApiClient.get<any>(`/${resource}/${id}`);
+      if (res && typeof res === 'object' && 'data' in res) {
+        return res as { data: T };
+      }
+      return { data: res } as { data: T };
+    },
     enabled: !!id,
   });
 }
@@ -22,7 +34,13 @@ export function useCreate<T, D = any>(resource: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: D) => ApiClient.post<{ data: T }>(`/${resource}`, data),
+    mutationFn: async (data: D) => {
+      const res = await ApiClient.post<any>(`/${resource}`, data);
+      if (res && typeof res === 'object' && 'data' in res) {
+        return res as { data: T };
+      }
+      return { data: res } as { data: T };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [resource] });
     },
@@ -33,8 +51,31 @@ export function useUpdate<T, D = any>(resource: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: D }) =>
-      ApiClient.put<{ data: T }>(`/${resource}/${id}`, data),
+    mutationFn: async ({ id, data }: { id: string; data: D }) => {
+      const res = await ApiClient.put<any>(`/${resource}/${id}`, data);
+      if (res && typeof res === 'object' && 'data' in res) {
+        return res as { data: T };
+      }
+      return { data: res } as { data: T };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [resource] });
+      queryClient.invalidateQueries({ queryKey: [resource, variables.id] });
+    },
+  });
+}
+
+export function usePatch<T, D = any>(resource: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: D }) => {
+      const res = await ApiClient.patch<any>(`/${resource}/${id}`, data);
+      if (res && typeof res === 'object' && 'data' in res) {
+        return res as { data: T };
+      }
+      return { data: res } as { data: T };
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [resource] });
       queryClient.invalidateQueries({ queryKey: [resource, variables.id] });

@@ -4,7 +4,7 @@ const isWindows = process.platform === "win32";
 
 function spawnNextDev() {
   const command = isWindows ? "cmd.exe" : "next";
-  const args = isWindows ? ["/c", "next", "dev"] : ["dev"];
+  const args = isWindows ? ["/c", "next", "dev", "--turbo"] : ["dev", "--turbo"];
 
   const child = spawn(command, args, {
     stdio: ["inherit", "pipe", "pipe"],

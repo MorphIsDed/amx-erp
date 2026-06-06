@@ -1,0 +1,33 @@
+{
+  "id": null,
+  "title": "AMX-ERP Queue Dashboard",
+  "tags": ["redis", "bullmq", "queues"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "BullMQ Active Jobs Count",
+      "targets": [{ "expr": "amx_queue_active_jobs", "legendFormat": "{{queue}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "BullMQ Failed Jobs Count",
+      "targets": [{ "expr": "amx_queue_failed_jobs", "legendFormat": "{{queue}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Webhook Dispatch Success Rate",
+      "targets": [{ "expr": "amx_webhook_success_rate", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Webhook Dispatch Failure Rate",
+      "targets": [{ "expr": "amx_webhook_failure_rate", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+    }
+  ]
+}

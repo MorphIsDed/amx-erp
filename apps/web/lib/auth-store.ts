@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { API_BASE_URL } from "./api-config";
+import Cookies from "js-cookie";
 
 export type UserRole = "admin" | "hr" | "finance" | "inventory" | "viewer";
 
@@ -84,6 +85,8 @@ export const useAuthStore = create<AuthState>((set) => ({
           localStorage.setItem("amx_user", JSON.stringify(user));
           localStorage.setItem("amx_token", token);
           localStorage.setItem("token", token);
+          Cookies.set("amx_token", token, { expires: 7 });
+          Cookies.set("amx_tenant", backendUser.tenantId || "DEFAULT_TENANT", { expires: 7 });
         }
 
         set({
@@ -120,6 +123,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("amx_token", token);
       // Compatibility with existing local storage tokens
       localStorage.setItem("token", token);
+      Cookies.set("amx_token", token, { expires: 7 });
+      Cookies.set("amx_tenant", "mock-tenant-id", { expires: 7 });
     }
 
     set({
@@ -137,6 +142,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.removeItem("amx_user");
       localStorage.removeItem("amx_token");
       localStorage.removeItem("token");
+      Cookies.remove("amx_token");
+      Cookies.remove("amx_tenant");
+      Cookies.remove("amx_auth");
+      Cookies.remove("amx_role");
     }
     set({
       user: null,

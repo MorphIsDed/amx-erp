@@ -1,0 +1,33 @@
+{
+  "id": null,
+  "title": "AMX-ERP Forecasting Dashboard",
+  "tags": ["ml-service", "fastapi", "ai"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Weekly Retraining Job Duration",
+      "targets": [{ "expr": "ml_model_retrain_duration_seconds", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "SKU Forecast Mean Error (MAPE)",
+      "targets": [{ "expr": "ml_model_accuracy_mape", "legendFormat": "{{sku}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Prediction Volumetric Output",
+      "targets": [{ "expr": "sum(ml_predictions_total)", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Outage Fallbacks Triggered",
+      "targets": [{ "expr": "ml_failures_total", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+    }
+  ]
+}

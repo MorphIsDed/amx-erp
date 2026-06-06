@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   FileText,
-  Users,
   Settings,
   CheckCircle2,
   ShoppingBag,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useAuthStore } from "../../lib/auth-store";
 import { API_ENDPOINTS } from "../../lib/api-config";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -56,6 +56,10 @@ export function ActivityTimeline() {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
+        if (res.status === 401) {
+          useAuthStore.getState().logout();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setActivities(data);

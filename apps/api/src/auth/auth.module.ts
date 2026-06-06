@@ -13,11 +13,18 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>('JWT_SECRET') || 'super-secret-jwt-key',
-        signOptions: { expiresIn: '60m' },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret && process.env.NODE_ENV === 'production') {
+          throw new Error(
+            'FATAL: JWT_SECRET environment variable is missing in production environment!',
+          );
+        }
+        return {
+          secret: secret || 'super-secret-jwt-key-dev',
+          signOptions: { expiresIn: '60m' },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

@@ -5,34 +5,42 @@ import {
   Body,
   Param,
   Patch,
-  Headers,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { PeriodsService } from './periods.service';
 import { CreatePeriodDto } from './dto/finance.dto';
-import { ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { Role } from '@repo/db';
 
 @ApiTags('Finance - Periods')
 @ApiBearerAuth()
-@ApiHeader({ name: 'x-tenant-id', required: true, description: 'Tenant ID' })
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('finance/periods')
 export class PeriodsController {
   constructor(private readonly periodsService: PeriodsService) {}
 
   @Post()
-  create(
-    @Headers('x-tenant-id') tenantId: string,
-    @Body() dto: CreatePeriodDto,
-  ) {
-    return this.periodsService.createPeriod(tenantId, dto);
+  @Roles(Role.ADMIN, Role.FINANCE)
+  @ApiOperation({ summary: 'Create accounting period' })
+  create(@Request() req: any, @Body() dto: CreatePeriodDto) {
+    return this.periodsService.createPeriod(req.user.tenantId, dto);
   }
 
   @Get()
-  findAll(@Headers('x-tenant-id') tenantId: string) {
-    return this.periodsService.findAll(tenantId, {});
+  @Roles(Role.ADMIN, Role.FINANCE, Role.MANAGER)
+  @ApiOperation({ summary: 'Get all accounting periods' })
+  findAll(@Request() req: any) {
+    return this.periodsService.findAll(req.user.tenantId, {});
   }
 
   @Patch(':id/close')
-  close(@Headers('x-tenant-id') tenantId: string, @Param('id') id: string) {
-    return this.periodsService.closePeriod(tenantId, id);
+  @Roles(Role.ADMIN, Role.FINANCE)
+  @ApiOperation({ summary: 'Close accounting period' })
+  close(@Request() req: any, @Param('id') id: string) {
+    return this.periodsService.closePeriod(req.user.tenantId, id);
   }
 }

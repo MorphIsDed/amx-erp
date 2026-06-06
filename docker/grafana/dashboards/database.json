@@ -1,0 +1,33 @@
+{
+  "id": null,
+  "title": "AMX-ERP Database Dashboard",
+  "tags": ["postgresql", "prisma", "database"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Database Query Throughput",
+      "targets": [{ "expr": "rate(amx_db_queries_total[5m])", "legendFormat": "{{operation}} {{model}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "Prisma Query Latency",
+      "targets": [{ "expr": "rate(amx_db_query_duration_seconds_sum[5m]) / rate(amx_db_query_duration_seconds_count[5m])", "legendFormat": "{{operation}} {{model}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Database Health Status",
+      "targets": [{ "expr": "amx_database_status", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Database Slow Query Count",
+      "targets": [{ "expr": "sum(amx_db_slow_queries_total)", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+    }
+  ]
+}

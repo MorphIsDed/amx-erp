@@ -1,0 +1,33 @@
+{
+  "id": null,
+  "title": "AMX-ERP Executive Dashboard",
+  "tags": ["executive", "business", "kpi"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Enterprise Revenue",
+      "targets": [{ "expr": "sum(amx_finance_revenue_inr)", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Monthly Payroll Disbursements",
+      "targets": [{ "expr": "sum(amx_hr_payroll_cost_inr)", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Current Inventory Asset Valuation",
+      "targets": [{ "expr": "amx_inventory_total_valuation_inr", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Active Sprint Projects",
+      "targets": [{ "expr": "amx_projects_active_count", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 }
+    }
+  ]
+}

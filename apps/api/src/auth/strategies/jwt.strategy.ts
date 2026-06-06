@@ -25,8 +25,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_SECRET') || 'super-secret-jwt-key',
+      secretOrKey: (() => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret && process.env.NODE_ENV === 'production') {
+          throw new Error(
+            'FATAL: JWT_SECRET environment variable is missing in production environment!',
+          );
+        }
+        return secret || 'super-secret-jwt-key-dev';
+      })(),
     });
   }
 

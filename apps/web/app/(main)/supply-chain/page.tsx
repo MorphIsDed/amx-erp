@@ -6,27 +6,38 @@ import { Package, Truck, Warehouse, AlertTriangle, History, Plus } from "lucide-
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { API_ENDPOINTS } from "@/lib/api-config";
 import { useInventoryStream } from "@/hooks/use-inventory-stream";
+import { useQuery } from "@tanstack/react-query";
+import { ApiClient } from "@/services/api-client";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } };
 
 export default function SupplyChainOverview() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading, isError } = useQuery({
+    queryKey: ['warehouseStatsOverview'],
+    queryFn: () => ApiClient.get<any>('/inventory/warehouses/stats/overview'),
+  });
+
   const { stockUpdates } = useInventoryStream();
 
-  useEffect(() => {
-    if (stockUpdates.length > 0 && stats) {
-      const latestUpdate = stockUpdates[0];
-      setStats((prev: any) => {
-        if (!prev) return prev;
-        
-        // Calculate the valuation change (very rough estimate for visual feedback)
-        const change = latestUpdate.movement?.type === 'IN' ? latestUpdate.movement.quantity : -latestUpdate.movement.quantity;
-        const valueChange = change * (latestUpdate.movement?.product?.price || 100);
+  // Keep a local copy of stats to merge real-time SSE updates
+  const [localStats, setLocalStats] = useState<any>(null);
 
+  useEffect(() => {
+    if (stats) {
+      setLocalStats(stats);
+    }
+  }, [stats]);
+
+  useEffect(() => {
+    if (stockUpdates.length > 0) {
+      const latestUpdate = stockUpdates[0];
+      const change = latestUpdate.movement?.type === 'IN' ? latestUpdate.movement.quantity : -latestUpdate.movement.quantity;
+      const valueChange = change * (latestUpdate.movement?.product?.price || 100);
+
+      setLocalStats((prev: any) => {
+        if (!prev) return prev;
         return {
           ...prev,
           totalValuation: prev.totalValuation + valueChange,
@@ -36,27 +47,10 @@ export default function SupplyChainOverview() {
     }
   }, [stockUpdates]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${API_ENDPOINTS.WAREHOUSES}/stats/overview`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (!res.ok) throw new Error("Failed to fetch stats");
-        const data = await res.json();
-        setStats(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  if (isLoading) return <div className="p-8 text-center text-text-faint">Initializing Spatial Supply Chain...</div>;
+  if (isError) return <div className="p-8 text-center text-danger font-medium">Failed to initialize supply chain dashboard.</div>;
 
-  if (loading) return <div className="p-8 text-center text-text-faint">Initializing Spatial Supply Chain...</div>;
+  const currentStats = localStats || stats;
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-7xl mx-auto">
@@ -72,9 +66,9 @@ export default function SupplyChainOverview() {
       </motion.div>
 
       <motion.div variants={container} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <InventoryStat title="Stock Valuation" value={`₹${(stats?.totalValuation / 1000000).toFixed(1)}M`} change="+8.5%" trend="up" icon={Package} gradient="from-primary to-cyan" />
-        <InventoryStat title="Active SKUs" value={stats?.products || 0} change="+12" trend="up" icon={Truck} gradient="from-info to-accent" />
-        <InventoryStat title="Total Warehouses" value={stats?.warehouses || 0} change="Optimal" trend="neutral" icon={Warehouse} gradient="from-success to-primary" />
+        <InventoryStat title="Stock Valuation" value={`₹${(currentStats?.totalValuation ? currentStats.totalValuation / 1000000 : 0).toFixed(1)}M`} change="+8.5%" trend="up" icon={Package} gradient="from-primary to-cyan" />
+        <InventoryStat title="Active SKUs" value={currentStats?.products || 0} change="+12" trend="up" icon={Truck} gradient="from-info to-accent" />
+        <InventoryStat title="Total Warehouses" value={currentStats?.warehouses || 0} change="Optimal" trend="neutral" icon={Warehouse} gradient="from-success to-primary" />
         <InventoryStat title="Low Stock Items" value="0" change="-2" trend="down" icon={AlertTriangle} gradient="from-warning to-rose" />
       </motion.div>
 
@@ -82,7 +76,7 @@ export default function SupplyChainOverview() {
         <Card variant="glass" className="lg:col-span-2">
           <CardHeader><CardTitle>Warehouse Distribution</CardTitle><p className="text-xs text-text-faint mt-1">Stock levels across all physical locations</p></CardHeader>
           <CardContent className="h-[350px] flex flex-col justify-center p-8 space-y-7">
-            {stats?.distribution?.map((w: any, i: number) => (
+            {currentStats?.distribution?.map((w: any, i: number) => (
               <WarehouseProgress 
                 key={w.id} 
                 name={w.name} 
@@ -99,7 +93,7 @@ export default function SupplyChainOverview() {
             <CardTitle>Recent Ledger</CardTitle><History className="w-4 h-4 text-text-faint" />
           </CardHeader>
           <CardContent className="space-y-5 pt-5">
-            {stats?.recentMovements?.map((m: any, i: number) => (
+            {currentStats?.recentMovements?.map((m: any, i: number) => (
               <motion.div key={m.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.06, ease: [0.16, 1, 0.3, 1] }} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold",

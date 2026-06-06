@@ -1,3 +1,4 @@
+import './common/observability/otel';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -11,6 +12,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ObservabilityService } from './common/observability/observability.service';
 import { PrismaService } from './prisma/prisma.service';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -19,7 +22,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Global Interceptors
-  app.useGlobalInterceptors(new AuditInterceptor(app.get(PrismaService)));
+  const obsService = app.get(ObservabilityService);
+  app.useGlobalInterceptors(
+    new AuditInterceptor(app.get(PrismaService)),
+    new LoggingInterceptor(obsService),
+  );
 
   // Security Headers
   app.use(

@@ -22,120 +22,136 @@ import {
   TrendingUp, 
   Sparkles, 
   BrainCircuit, 
-  Target, 
   Zap, 
-  BarChart3, 
   PieChart, 
-  RefreshCw,
-  TrendingDown,
-  Download,
   Activity,
   ShieldCheck,
-  Cpu
+  Cpu,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/button";
-import { useFinanceStore, useEmployeeStore, useInventoryStore } from "@/lib/store";
-import { exportToPdf } from "@/lib/export-utils";
+import { useQuery } from "@tanstack/react-query";
+import { useList } from "@/hooks/use-crud";
+import { Product } from "@/types/product";
+import { ApiClient } from "@/services/api-client";
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
-const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
+const container: any = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+const item: any = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } };
 
 export default function AnalyticsPage() {
-  const { transactions } = useFinanceStore();
-  const { employees } = useEmployeeStore();
-  const { items } = useInventoryStore();
-
   const [activeChart, setActiveChart] = useState<"forecast" | "departments" | "ml" | "webhooks">("forecast");
-  const [selectedSku, setSelectedSku] = useState<string>("PROD-001");
-  const [mlSummary, setMlSummary] = useState<any>({
-    totalProducts: 10,
-    totalTrainedModels: 6,
-    averageMape: 4.8,
-    averageRmse: 1.9,
-    accuracyScore: 95.2,
-    mlServiceStatus: 'ONLINE'
-  });
-  const [skuForecast, setSkuForecast] = useState<any>({
-    sku: "PROD-001",
-    productName: "High-Grade Steel Plate",
-    forecastType: "prophet_seasonal_regression",
-    predictions: []
-  });
+  const [selectedSku, setSelectedSku] = useState<string>("");
   const [training, setTraining] = useState(false);
+  const [trainingSuccess, setTrainingSuccess] = useState("");
 
-  // Auto-generate 30-day forecast predictions on client for selected SKU
+  // 1. Fetch real products list to populate SKU selector
+  const { data: productsRes } = useList<Product>('inventory/products');
+  const products = productsRes?.data || [];
+
+  // Set default selected SKU when products load
   useEffect(() => {
-    const baseDemand = selectedSku === "PROD-001" ? 45 : selectedSku === "PROD-002" ? 30 : 15;
-    const preds = [];
-    const now = new Date();
-    for (let i = 1; i <= 30; i++) {
-      const date = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-      const weekday = date.getDay();
-      const season = 5.0 * Math.sin((2 * Math.PI * weekday) / 7);
-      const val = Math.max(1, Math.round((baseDemand + season + (Math.random() - 0.5) * 6) * 10) / 10);
-      preds.push({
-        date: date.toISOString().split('T')[0],
-        quantity: val
-      });
+    if (products.length > 0 && !selectedSku) {
+      setSelectedSku(products[0].sku);
     }
-    setSkuForecast({
+  }, [products, selectedSku]);
+
+  // 2. Fetch real ML Summary / Health
+  const { data: mlSummary, isLoading: isMlLoading, refetch: refetchSummary } = useQuery({
+    queryKey: ['forecastingSummary'],
+    queryFn: async () => {
+      const res = await ApiClient.get<any>('/forecasting/summary');
+      return res?.data || res;
+    },
+    initialData: {
+      totalProducts: 0,
+      totalTrainedModels: 0,
+      averageMape: 5.0,
+      averageRmse: 2.0,
+      accuracyScore: 95.0,
+      mlServiceStatus: 'OFFLINE_FALLBACK'
+    }
+  });
+
+  // 3. Fetch real SKU Forecast
+  const { data: skuForecast, isLoading: isSkuLoading } = useQuery({
+    queryKey: ['skuForecast', selectedSku],
+    queryFn: async () => {
+      const res = await ApiClient.get<any>(`/forecasting/sku/${selectedSku}`);
+      return res?.data || res;
+    },
+    enabled: !!selectedSku,
+    initialData: {
       sku: selectedSku,
-      productName: selectedSku === "PROD-001" ? "High-Grade Steel Plate" : selectedSku === "PROD-002" ? "Premium Copper Coil" : "Aluminum Bar",
-      forecastType: "prophet_seasonal_regression",
-      predictions: preds
-    });
-  }, [selectedSku]);
+      productName: "Loading product...",
+      forecastType: "regression",
+      predictions: []
+    }
+  });
 
-  const handleTrainModels = () => {
+  // 4. Fetch real Revenue Forecast
+  const { data: revenueForecast = [], isLoading: isRevenueLoading } = useQuery({
+    queryKey: ['revenueForecast'],
+    queryFn: async () => {
+      const res = await ApiClient.get<any>('/analytics/revenue-forecast');
+      return res?.data || res || [];
+    }
+  });
+
+  // 5. Fetch real HR Charts for workforce distribution
+  const { data: hrCharts } = useQuery({
+    queryKey: ['hrCharts'],
+    queryFn: async () => {
+      const res = await ApiClient.get<any>('/analytics/hr-charts');
+      return res?.data || res;
+    },
+    initialData: {
+      employeeGrowth: [],
+      departmentDistribution: [],
+      leaveStatistics: { paid: 0, unpaid: 0 }
+    }
+  });
+
+  // 6. Fetch real Top Demand products
+  const { data: topDemand = [] } = useQuery({
+    queryKey: ['topDemand'],
+    queryFn: async () => {
+      const res = await ApiClient.get<any>('/forecasting/top-demand');
+      return res?.data || res || [];
+    }
+  });
+
+  // Model training handler
+  const handleTrainModels = async () => {
     setTraining(true);
-    setTimeout(() => {
+    setTrainingSuccess("");
+    try {
+      await ApiClient.post('/forecasting/train', {});
+      setTrainingSuccess("All SKU models successfully queued & retrained on FastAPI ML server!");
+      setTimeout(() => setTrainingSuccess(""), 5000);
+      refetchSummary();
+    } catch (err: any) {
+      console.error("Retraining error:", err);
+    } finally {
       setTraining(false);
-      setMlSummary((prev: any) => ({
-        ...prev,
-        totalTrainedModels: prev.totalProducts,
-        averageMape: 4.2,
-        accuracyScore: 95.8
-      }));
-    }, 2000);
+    }
   };
 
-  // Dynamic statistics
-  const activeSKUsCount = items.length;
-  const staffSizeCount = employees.length;
+  // Map revenue forecast data for Recharts AreaChart
+  const rawChartData = revenueForecast.map((item: any) => ({
+    name: item.month.includes("Forecast") ? item.month : new Date(item.month + "-02").toLocaleDateString('en-US', { month: 'short' }),
+    actual: item.actual,
+    predicted: item.predicted,
+    // Add estimated treasury outflow (25% of inflow) for dual visualization
+    expense: Math.round(item.predicted * 0.25)
+  }));
 
-  // Calculate dynamic cash metrics
-  const parseAmount = (amtStr: string) => {
-    return parseFloat(amtStr.replace(/[₹,]/g, "")) || 0;
-  };
-
-  const totalRevenue = transactions
-    .filter(t => t.category === "Income" && t.status === "Paid")
-    .reduce((sum, t) => sum + parseAmount(t.amount), 0);
-
-  // Compute departmental workforce distribution
-  const departments = ["Engineering", "Finance", "HR", "Product", "Sales", "Operations"];
-  const departmentData = departments.map((dept, index) => {
-    const count = employees.filter(e => e.department === dept).length;
-    // Mock payroll estimation based on headcount
-    const estimatedPayroll = count * 95000;
-    return {
-      name: dept,
-      Headcount: count,
-      Payroll: estimatedPayroll,
-    };
-  }).filter(d => d.Headcount > 0);
-
-  // Dynamic monthly income/expense forecast data from store transactions
-  const rawChartData = [
-    { name: "Jan", actual: 4000000, predicted: 4100000, expense: 1200000 },
-    { name: "Feb", actual: 3000000, predicted: 3200000, expense: 1100000 },
-    { name: "Mar", actual: 2000000, predicted: 2150000, expense: 950000 },
-    { name: "Apr", actual: 2780000, predicted: 2900000, expense: 1300000 },
-    { name: "May", actual: totalRevenue || 3890000, predicted: 4100000, expense: 1450000 },
-    { name: "Jun", actual: null as any, predicted: 4800000, expense: 1550000 },
-    { name: "Jul", actual: null as any, predicted: 5100000, expense: 1600000 },
-  ];
+  // Map workforce distribution data
+  const departmentData = hrCharts.departmentDistribution.map((d: any) => ({
+    name: d.department,
+    Headcount: d.count,
+    Payroll: d.count * 95000,
+  }));
 
   const mockWebhookDeliverability = [
     { name: "Invoice Paid", success: 42, failed: 0, delayMs: 45 },
@@ -147,6 +163,22 @@ export default function AnalyticsPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-7xl mx-auto pb-12">
       
+      {/* FEEDBACK TOAST */}
+      <AnimatePresence>
+        {trainingSuccess && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="p-4 bg-primary/[0.08] border border-primary/30 rounded-2xl flex items-center gap-3 text-sm text-primary font-medium shadow-xl backdrop-blur-md"
+          >
+            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-slate-950 font-bold">✓</div>
+            <div className="flex-1">{trainingSuccess}</div>
+            <button onClick={() => setTrainingSuccess("")} className="text-primary hover:opacity-85 text-xs font-semibold">Dismiss</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* AI BUSINESS INTELLIGENCE LEADER */}
       <motion.div variants={item} className="relative p-8 rounded-2xl border border-primary/15 overflow-hidden bg-card/45 backdrop-blur-md shadow-lg">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/[0.05] blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none" />
@@ -161,7 +193,14 @@ export default function AnalyticsPage() {
               <h1 className="text-3xl font-bold tracking-tight flex flex-wrap items-center gap-3">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">AI</span>{" "}
                 <span className="text-neutral-100">Enterprise Intelligence</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold uppercase tracking-widest border border-indigo-500/20 animate-pulse">Active v2.5</span>
+                <span className={cn(
+                  "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border animate-pulse",
+                  mlSummary.mlServiceStatus === 'ONLINE' 
+                    ? "bg-success/10 text-success border-success/20" 
+                    : "bg-warning/10 text-warning border-warning/20"
+                )}>
+                  {mlSummary.mlServiceStatus}
+                </span>
               </h1>
               <p className="text-neutral-400 mt-2 max-w-md text-sm">
                 Live predictive modeling of treasury cash flow, supply chain demand forecasting, and real-time outbound integrations.
@@ -171,11 +210,13 @@ export default function AnalyticsPage() {
           <div className="flex gap-3">
             <div className="p-4 rounded-xl bg-neutral-900/40 border border-neutral-800 backdrop-blur-sm min-w-[120px]">
               <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Predictive Score</p>
-              <p className="text-2xl font-bold text-indigo-400 mt-1 font-mono">{mlSummary.accuracyScore}%</p>
+              <p className="text-2xl font-bold text-indigo-400 mt-1 font-mono">{isMlLoading ? "..." : `${mlSummary.accuracyScore}%`}</p>
             </div>
             <div className="p-4 rounded-xl bg-neutral-900/40 border border-neutral-800 backdrop-blur-sm min-w-[120px]">
-              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Active SKUs</p>
-              <p className="text-2xl font-bold text-violet-400 mt-1 font-mono">{activeSKUsCount || 12}</p>
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Active Models</p>
+              <p className="text-2xl font-bold text-violet-400 mt-1 font-mono">
+                {isMlLoading ? "..." : `${mlSummary.totalTrainedModels}/${mlSummary.totalProducts}`}
+              </p>
             </div>
           </div>
         </div>
@@ -246,36 +287,43 @@ export default function AnalyticsPage() {
                   exit={{ opacity: 0, y: -10 }}
                   className="w-full h-full"
                 >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={rawChartData}>
-                      <defs>
-                        <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#34d399" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f87171" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 10 }} dy={10} />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: "#737373", fontSize: 10 }} 
-                        tickFormatter={(v) => `₹${(v / 1000000).toFixed(1)}M`}
-                      />
-                      <Tooltip 
-                        formatter={(val: any) => [`₹${parseInt(val).toLocaleString()}`, ""]}
-                        contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "12px", fontSize: "11px", color: "#f5f5f5" }} 
-                      />
-                      <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: "10px", fontWeight: "bold" }} />
-                      <Area type="monotone" name="Projected Cash Inflow" dataKey="predicted" stroke="#34d399" strokeDasharray="4 4" strokeOpacity={0.5} fill="transparent" />
-                      <Area type="monotone" name="Actual Ledger Inflow" dataKey="actual" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorActual)" />
-                      <Area type="monotone" name="Treasury Outflow" dataKey="expense" stroke="#f87171" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {isRevenueLoading ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-faint">
+                      <Loader2 className="w-7 h-7 animate-spin text-primary" />
+                      <span>Projecting cash ledger...</span>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={rawChartData}>
+                        <defs>
+                          <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#34d399" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f87171" stopOpacity={0.15} />
+                            <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 10 }} dy={10} />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: "#737373", fontSize: 10 }} 
+                          tickFormatter={(v) => `₹${(v / 100000).toFixed(1)}L`}
+                        />
+                        <Tooltip 
+                          formatter={(val: any) => [`₹${parseInt(val).toLocaleString()}`, ""]}
+                          contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "12px", fontSize: "11px", color: "#f5f5f5" }} 
+                        />
+                        <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: "10px", fontWeight: "bold" }} />
+                        <Area type="monotone" name="Projected Cash Inflow" dataKey="predicted" stroke="#34d399" strokeDasharray="4 4" strokeOpacity={0.5} fill="transparent" />
+                        <Area type="monotone" name="Actual Ledger Inflow" dataKey="actual" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorActual)" />
+                        <Area type="monotone" name="Treasury Outflow (Est)" dataKey="expense" stroke="#f87171" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </motion.div>
               )}
 
@@ -288,19 +336,19 @@ export default function AnalyticsPage() {
                   className="w-full h-full flex flex-col justify-between"
                 >
                   <div className="flex justify-between items-center mb-4 px-2">
-                    <div className="flex gap-2">
-                      {["PROD-001", "PROD-002", "PROD-003"].map((sku) => (
+                    <div className="flex gap-2 max-w-[60%] overflow-x-auto">
+                      {products.map((p) => (
                         <button
-                          key={sku}
-                          onClick={() => setSelectedSku(sku)}
+                          key={p.id}
+                          onClick={() => setSelectedSku(p.sku)}
                           className={cn(
-                            "px-2.5 py-1 rounded text-[10px] font-bold border cursor-pointer transition-colors",
-                            selectedSku === sku 
+                            "px-2.5 py-1 rounded text-[10px] font-bold border cursor-pointer transition-colors whitespace-nowrap",
+                            selectedSku === p.sku 
                               ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-200" 
                               : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200"
                           )}
                         >
-                          {sku}
+                          {p.sku}
                         </button>
                       ))}
                     </div>
@@ -308,18 +356,26 @@ export default function AnalyticsPage() {
                       Model Type: {skuForecast.forecastType}
                     </span>
                   </div>
+                  
                   <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={skuForecast.predictions}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 8 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 10 }} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "12px", fontSize: "11px", color: "#f5f5f5" }} 
-                        />
-                        <Line type="monotone" name="Forecasted Demand Quantity" dataKey="quantity" stroke="#818cf8" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {isSkuLoading ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-faint">
+                        <Loader2 className="w-7 h-7 animate-spin text-primary" />
+                        <span>Querying FastAPI model prediction...</span>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={skuForecast.predictions}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
+                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 8 }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#737373", fontSize: 10 }} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "12px", fontSize: "11px", color: "#f5f5f5" }} 
+                          />
+                          <Line type="monotone" name="Forecasted Demand Quantity" dataKey="quantity" stroke="#818cf8" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -366,7 +422,7 @@ export default function AnalyticsPage() {
                       />
                       <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: "10px", fontWeight: "bold" }} />
                       <Bar name="Staff Count" dataKey="Headcount" fill="#60a5fa" radius={[4, 4, 0, 0]}>
-                        {departmentData.map((entry, index) => (
+                        {departmentData.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#60a5fa" : "#34d399"} />
                         ))}
                       </Bar>
@@ -390,7 +446,11 @@ export default function AnalyticsPage() {
               <InsightItem 
                 icon={TrendingUp} 
                 title="AI Demand Forecast" 
-                description={`Forecast predicts demand surge for Steel Plates in next 14 days (+22.4%).`} 
+                description={
+                  topDemand.length > 0 
+                    ? `Forecast predicts high demand volume for "${topDemand[0].name}" (+${topDemand[0].forecastedVolume30d} units).`
+                    : "No high demand spikes forecasted for this catalog cycle."
+                } 
                 type="positive" 
               />
               <InsightItem 
@@ -402,7 +462,7 @@ export default function AnalyticsPage() {
               <InsightItem 
                 icon={Zap} 
                 title="Low Stock Advisory" 
-                description={`${items.filter(i => i.stock <= 25).length || 2} SKUs are below safety margins.`} 
+                description={`${products.filter((p: any) => p.stock <= p.reorderLevel).length} SKUs are below safety margins.`} 
                 type="warning" 
               />
             </CardContent>

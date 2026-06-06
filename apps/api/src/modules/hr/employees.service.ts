@@ -78,4 +78,10 @@ export class EmployeesService {
       where: { id, tenantId },
     });
   }
+
+  async findDepartments(tenantId: string) {
+    return this.prisma.department.findMany({
+      where: { tenantId },
+    });
+  }
 }

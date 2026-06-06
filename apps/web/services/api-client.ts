@@ -4,7 +4,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 
 export class ApiClient {
   static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = Cookies.get('amx_auth');
+    let token = Cookies.get('amx_token');
+    if (!token && typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || localStorage.getItem('amx_token') || undefined;
+    }
     const tenantId = Cookies.get('amx_tenant') || 'DEFAULT_TENANT';
 
     const headers: Record<string, string> = {
@@ -50,6 +53,14 @@ export class ApiClient {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  static patch<T>(endpoint: string, body: any, options?: RequestInit) {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
       body: JSON.stringify(body),
     });
   }

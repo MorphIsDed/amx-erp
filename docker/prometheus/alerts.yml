@@ -1,0 +1,118 @@
+groups:
+  - name: amx-alerts
+    rules:
+      # --- CRITICAL ALERTS ---
+      - alert: ApiDown
+        expr: up{job="nestjs-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NestJS API Server is DOWN"
+          description: "The primary NestJS backend has been unreachable for more than 1 minute."
+
+      - alert: DatabaseDown
+        expr: amx_database_status == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL Database connection is DOWN"
+          description: "Prisma client cannot establish connection to PostgreSQL database instance."
+
+      - alert: RedisDown
+        expr: amx_process_redis_status == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis Cache & BullMQ Broker is DOWN"
+          description: "Redis is unreachable, disrupting queue jobs and caching operations."
+
+      - alert: ForecastingServiceDown
+        expr: up{job="fastapi-ml"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI Forecasting FastAPI Service is DOWN"
+          description: "The Python forecasting server is unreachable, falling back to local simulation."
+
+      # --- PERFORMANCE ALERTS ---
+      - alert: HighApiLatency
+        expr: rate(amx_api_request_duration_seconds_sum[5m]) / rate(amx_api_request_duration_seconds_count[5m]) > 1.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API response latency"
+          description: "Average API latency exceeds 1.5 seconds over the past 2 minutes."
+
+      - alert: QueueBacklog
+        expr: amx_queue_active_jobs > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "BullMQ queue backlog high"
+          description: "Queue backlog has exceeded 50 active jobs for 5 minutes."
+
+      - alert: SlowQueries
+        expr: rate(amx_db_slow_queries_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Database queries exceeding 100ms average response time are occurring more than 5 times per minute."
+
+      # --- BUSINESS ALERTS ---
+      - alert: PayrollFailure
+        expr: rate(amx_queue_failed_jobs{queue="payroll"}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payroll Processing job failed"
+          description: "An employee payroll calculation job failed in the BullMQ worker processor."
+
+      - alert: InvoiceProcessingFailure
+        expr: rate(amx_webhook_deliveries_total{status="failed"}[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbound Invoice Webhook dispatch failed"
+          description: "Outbound webhook transmission of invoice data failed due to remote receiver timeout/rejection."
+
+      - alert: ForecastRetrainingFailure
+        expr: amx_forecast_failures_total > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI Forecasting Retraining failed"
+          description: "The weekly cron AI forecasting retraining job encountered failures."
+
+      # --- SECURITY ALERTS ---
+      - alert: ExcessiveLoginFailures
+        expr: rate(amx_api_requests_total{path="/auth/login", status="401"}[5m]) * 60 > 10
+        labels:
+          severity: critical
+        annotations:
+          summary: "Excessive login failures detected"
+          description: "More than 10 failed login attempts (status 401) occurred within 5 minutes, indicating potential brute force."
+
+      - alert: SuspiciousTenantActivity
+        expr: rate(amx_api_requests_total{status="403"}[5m]) * 60 > 20
+        labels:
+          severity: warning
+        annotations:
+          summary: "Suspicious Tenant Access attempts"
+          description: "More than 20 forbidden requests (status 403) recorded within 5 minutes, indicating potential privilege escalation attempts."
+
+      - alert: RbacViolations
+        expr: rate(amx_api_requests_total{status="403"}[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "RBAC Access Violation detected"
+          description: "A authenticated user attempted to access an API endpoint restricted by RBAC rules."

@@ -21,6 +21,7 @@ import { ActivityTimeline } from "@/components/dashboard/activity-timeline";
 import { useEffect, useState } from "react";
 import { API_ENDPOINTS } from "@/lib/api-config";
 import Link from "next/link";
+import { useAuthStore } from "@/lib/auth-store";
 
 const container = {
   hidden: { opacity: 0 },
@@ -55,6 +56,11 @@ export default function DashboardPage() {
             headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
           }),
         ]);
+
+        if (overviewRes.status === 401 || projectsRes.status === 401) {
+          useAuthStore.getState().logout();
+          return;
+        }
 
         if (overviewRes.ok) {
           const overviewJson = await overviewRes.json();

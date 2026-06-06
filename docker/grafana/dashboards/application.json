@@ -1,0 +1,33 @@
+{
+  "id": null,
+  "title": "AMX-ERP Application Dashboard",
+  "tags": ["nestjs", "fastapi", "performance"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "API Request Throughput",
+      "targets": [{ "expr": "rate(amx_api_requests_total[5m])", "legendFormat": "{{method}} {{path}}", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "API Request Latency (95th percentile)",
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(amx_api_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "API Error Rate",
+      "targets": [{ "expr": "rate(amx_api_requests_total{status=~\"5..\"}[5m]) / rate(amx_api_requests_total[5m])", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Active / In-Flight Connections",
+      "targets": [{ "expr": "amx_api_active_requests", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+    }
+  ]
+}

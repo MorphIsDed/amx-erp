@@ -2,6 +2,7 @@ import datetime
 import math
 import json
 import os
+import time
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any, Optional
@@ -9,8 +10,10 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sklearn.linear_model import LinearRegression
+from observability import setup_observability, PREDICTION_COUNT, ACCURACY_MAPE, RETRAIN_DURATION, FAILURES_COUNT
 
 app = FastAPI(title="AMX-ERP AI Forecasting Service", version="1.0")
+setup_observability(app)
 
 # Enable CORS for internal cross-network communication
 app.add_middleware(
@@ -75,7 +78,9 @@ def health():
 
 @app.post("/train")
 def train(req: TrainRequest):
+    start_time = time.time()
     if len(req.demand_data) < 5:
+        FAILURES_COUNT.inc()
         raise HTTPException(
             status_code=400,
             detail="Insufficient historical demand data points to train model (minimum 5 required)."
@@ -148,6 +153,11 @@ def train(req: TrainRequest):
 
     save_registry()
 
+    # Record metrics
+    duration = time.time() - start_time
+    RETRAIN_DURATION.observe(duration)
+    ACCURACY_MAPE.labels(sku=sku).set(mape)
+
     return {
         "status": "trained",
         "sku": sku,
@@ -161,6 +171,8 @@ def predict(req: PredictRequest):
     horizon = req.horizon
 
     if horizon not in [30, 60, 90]:
+        PREDICTION_COUNT.labels(sku=sku, status="error").inc()
+        FAILURES_COUNT.inc()
         raise HTTPException(
             status_code=400,
             detail="Invalid forecast horizon configuration. Supported horizons are 30, 60, or 90 days."
@@ -185,6 +197,7 @@ def predict(req: PredictRequest):
                 "quantity": val
             })
             
+        PREDICTION_COUNT.labels(sku=sku, status="fallback").inc()
         return {
             "sku": sku,
             "forecast_type": "fallback_seasonal",
@@ -214,9 +227,10 @@ def predict(req: PredictRequest):
 
         predictions.append({
             "date": curr_date.date().isoformat(),
-            "quantity": float(val)
+            "predictions": float(val)
         })
 
+    PREDICTION_COUNT.labels(sku=sku, status="success").inc()
     return {
         "sku": sku,
         "forecast_type": "prophet_seasonal_regression",

@@ -27,9 +27,32 @@ export class InventoryService {
   }
 
   async getProducts(tenantId: string) {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { tenantId },
-      include: { vendor: true },
+      include: {
+        vendor: true,
+        stockMovements: true,
+      },
+    });
+
+    return products.map((product) => {
+      const stock = product.stockMovements.reduce((acc, curr) => {
+        const change =
+          curr.type === 'IN' || curr.type === 'ADJUSTMENT'
+            ? curr.quantity
+            : -curr.quantity;
+        return acc + change;
+      }, 0);
+
+      const lastMovement =
+        product.stockMovements[product.stockMovements.length - 1];
+
+      const { stockMovements: _stockMovements, ...rest } = product;
+      return {
+        ...rest,
+        stock,
+        warehouseId: lastMovement ? lastMovement.warehouseId : null,
+      };
     });
   }
 
