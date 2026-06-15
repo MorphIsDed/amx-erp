@@ -1,44 +1,44 @@
-# AMX-ERP: The Spatial Enterprise OS 🚀
+# AMX-ERP: The Spatial Enterprise OS
 
-AMX-ERP is a next-generation Enterprise Resource Planning (ERP) platform designed as a living, spatially-aware operating system for the modern enterprise. It moves beyond static dark-mode dashboards into a fluid, reactive organism that breathes and responds to data in real-time.
+AMX-ERP is a next-generation Enterprise Resource Planning (ERP) platform designed as a living, spatially-aware operating system for the modern enterprise. It moves beyond static dark-mode dashboards into a fluid, reactive ecosystem that responds to data in real-time.
 
 ---
 
-## ✨ Design Philosophy
+## Design Philosophy
 
-AMX-ERP represents a radical shift in enterprise UX:
-- **Aurora Mesh Gradients:** Dynamic, time-shifting backgrounds that create a sense of life and spatial presence.
-- **Spatial Depth:** A 6-level elevation system using glassmorphism, Z-index-aware shadows, and light refraction.
+AMX-ERP represents a paradigm shift in enterprise UX:
+- **Aurora Mesh Gradients:** Dynamic, time-shifting backgrounds that create a sense of spatial presence.
+- **Spatial Depth:** A 6-level elevation system utilizing glassmorphism, Z-index-aware shadows, and light refraction.
 - **Physics-Based UI:** Smooth spring-based animations and magnetic interactions powered by Framer Motion.
 - **Chromatic Refraction:** Iridescent gradient borders, glass panels, and plasma-effect focus states.
-- **Dynamic Theming:** Implements full light/dark mode configuration utilizing Tailwind CSS v4 and `next-themes` for high-fidelity dark-glass and ice-glass aesthetics.
+- **Dynamic Theming:** Implements full light and dark mode configurations utilizing Tailwind CSS v4 and `next-themes` for high-fidelity dark-glass aesthetics.
 
 ---
 
-## 🏗️ Monorepo Structure
+## Monorepo Structure
 
 Built on **Turborepo** for high performance, simplified maintenance, and dependency caching:
 
 - `apps/web` — **Next.js 16** (App Router) powered by Tailwind CSS v4, Framer Motion, and Zustand. Integrates offline PWA caching, background IndexedDB synchronization, and real-time Server-Sent Events (SSE).
-- `apps/api` — **NestJS** backend core exposing REST + GraphQL gateways. Utilizes BullMQ for async mail/webhook queueing, and fits with a PostgreSQL database.
+- `apps/api` — **NestJS** backend core exposing REST and GraphQL gateways. Utilizes BullMQ for asynchronous mail and webhook queueing, integrated with a PostgreSQL database.
 - `packages/db` — Shared Prisma module exposing schemas, migrations, and model exports to the NestJS core.
 - `packages/typescript-config` & `eslint-config` — Shared architectural configurations.
 
 ---
 
-## ⚙️ Core Technical Stack & Architecture
+## Core Technical Stack & Architecture
 
 - **Frontend App Framework:** Next.js 16 (App Router), Tailwind CSS v4, Framer Motion, Recharts, `js-cookie`.
 - **Backend API Core:** NestJS (v11), Apollo GraphQL (Apollo Server v4), Passport JWT security, EventEmitter2.
 - **State & Theme Management:** Zustand (reactive stores), `next-themes` (system-adaptive layouts).
 - **Persistent Databases:**
   - **PostgreSQL:** Production-grade multi-tenant database for `apps/api`.
-  - **SQLite:** Lightweight local engine (`apps/web/dev.db`) using `@prisma/adapter-libsql` for 0ms-latency client-side mutations and optimistic updates.
+  - **SQLite:** Lightweight local engine (`apps/web/dev.db`) using `@prisma/adapter-libsql` for low-latency client-side mutations and optimistic updates.
 - **Asynchronous Task Processing:** **Redis** + **BullMQ** processing asynchronous notification deliveries with exponential backoff retries and dead-letter queues.
 
 ---
 
-## 🚀 Advanced Enterprise Features
+## Advanced Enterprise Features
 
 The platform is supercharged with high-utility enterprise-grade workflows:
 
@@ -57,7 +57,7 @@ The platform is supercharged with high-utility enterprise-grade workflows:
 * **Service Worker Caching:** Fully configures versioned cache strategies in `sw.js` (static assets cache-first; API endpoints network-first with cache fallbacks).
 * **Seamless Offline Caching:** If a user loses connection, read views (Invoices, Employees, Inventory) remain accessible via cache.
 * **Background IndexedDB Replay:** Intercepts offline `POST`/`PUT`/`DELETE` operations, queues them securely in IndexedDB, and replays them automatically on network restoration.
-* **PWA Assets:** Features gorgeous, pre-rendered high-resolution application icons for mobile/desktop installability.
+* **PWA Assets:** Features pre-rendered high-resolution application icons for mobile and desktop installability.
 
 ### 4. Global Unified Command Palette
 * Accessible via `Ctrl+K` / `Cmd+K` or the search trigger in the Topbar.
@@ -65,7 +65,7 @@ The platform is supercharged with high-utility enterprise-grade workflows:
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Node.js 20.19.0+**
@@ -73,13 +73,13 @@ The platform is supercharged with high-utility enterprise-grade workflows:
 - **Docker Desktop** (for PostgreSQL and Redis containers)
 
 ### 2. Dependency Installation
-```powershell
+```bash
 pnpm install
 ```
 
 ### 3. Hydrate Local SQLite (Next.js Web)
 Set up the SQLite database and populate it with initial mocks:
-```powershell
+```bash
 # Navigate into the web app
 cd apps/web
 
@@ -92,13 +92,13 @@ npx prisma db seed
 
 ### 4. Docker Infrastructure (NestJS Core)
 Start PostgreSQL and Redis:
-```powershell
+```bash
 docker-compose up -d
 ```
 
 ### 5. Running the Dev Server
 Launch the workspace:
-```powershell
+```bash
 # From the root directory
 pnpm dev
 ```
@@ -108,7 +108,7 @@ pnpm dev
 
 ---
 
-## 📜 Development Standards
+## Development Standards
 
 - **Depth System:** Leverage the **6-level spatial depth elevation tokens** in `tokens.css`.
 - **Fluid Animation:** Avoid linear transitions. Use spring-physics for natural and organic micro-interactions.
@@ -117,7 +117,7 @@ pnpm dev
 
 ---
 
-## ☁️ Infrastructure & Cloud Deployment (Week 4)
+## Infrastructure & Cloud Deployment
 
 AMX-ERP includes comprehensive Infrastructure as Code (IaC) and Kubernetes deployment manifests located in the `ops/` directory.
 
