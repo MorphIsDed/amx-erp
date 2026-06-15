@@ -154,3 +154,34 @@ helm upgrade --install amx-erp ./amx-erp \
 - **Ingress:** Istio Gateway routing traffic based on hostnames (`amx-erp.internal` for web, `api.amx-erp.internal` for core).
 - **Workloads:** Next.js Web Frontend, NestJS API Core, and FastAPI ML Service running as separate Deployments.
 - **Resilience:** Configured with Pod Disruption Budgets (minAvailable: 1) and HPAs scaling on >70% CPU/Memory utilization.
+
+### 3. Architecture Diagram
+
+```mermaid
+graph TD
+  User((Client)) -->|HTTPS| IGW[Istio Ingress Gateway]
+  
+  subgraph AWS EKS Cluster
+    IGW -->|amx-erp.internal| Web[Next.js Web App]
+    IGW -->|api.amx-erp.internal| API[NestJS API Core]
+    
+    Web -.->|REST / GraphQL| API
+    API -->|Internal API| ML[FastAPI ML Service]
+  end
+  
+  subgraph AWS Managed Services
+    API -->|Prisma ORM| RDS[(RDS PostgreSQL)]
+    API -->|BullMQ & Cache| Redis[(ElastiCache Redis)]
+  end
+  
+  subgraph External
+    API -->|Alerts| PD[PagerDuty]
+    API -->|Async Delivery| SMTP[SMTP / Webhooks]
+  end
+  
+  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:2px,color:#fff;
+  classDef aws fill:#ff9900,stroke:#fff,stroke-width:2px,color:#232f3e;
+  
+  class Web,API,ML,IGW k8s;
+  class RDS,Redis aws;
+```
