@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
   },
+  turbopack: {},
 };
 
 const bundleAnalyzer = withBundleAnalyzer({
