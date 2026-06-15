@@ -27,10 +27,11 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const { tenantId, ...rest } = registerDto;
     const user = await this.usersService.create({
-      ...registerDto,
+      ...rest,
       password: hashedPassword,
-      tenant: { connect: { id: registerDto.tenantId } },
+      tenant: { connect: { id: tenantId } },
     });
 
     const payload = {

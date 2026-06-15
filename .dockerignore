@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.env
+apps/api/dist
+apps/web/.next
+packages/db/node_modules
+packages/ui/node_modules
+apps/api/node_modules
+apps/web/node_modules
+apps/ml-service/__pycache__

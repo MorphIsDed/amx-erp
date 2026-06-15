@@ -10,34 +10,14 @@ import {
   Mail, 
   Lock, 
   ArrowRight, 
-  Loader2, 
-  ShieldCheck, 
-  User, 
-  TrendingUp, 
-  Users, 
-  Package, 
-  Eye 
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-interface MockAccount {
-  email: string;
-  role: UserRole;
-  label: string;
-  desc: string;
-  icon: any;
-}
 
-const mockAccounts: MockAccount[] = [
-  { email: "admin@acme.com", role: "admin", label: "Global Admin", desc: "Full system access & logs", icon: ShieldCheck },
-  { email: "finance@acme.com", role: "finance", label: "Finance Manager", desc: "Invoices, payroll & treasury", icon: TrendingUp },
-  { email: "hr@acme.com", role: "hr", label: "HR Manager", desc: "Headcount & payroll status", icon: Users },
-  { email: "inventory@acme.com", role: "inventory", label: "Inventory Lead", desc: "Sourcing & supply chain", icon: Package },
-  { email: "guest@acme.com", role: "viewer", label: "Executive Guest", desc: "Read-only global overview", icon: Eye },
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,13 +41,6 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router, redirectUrl]);
 
-  const handleQuickSelect = (account: MockAccount) => {
-    setEmail(account.email);
-    setPassword("password123");
-    setSelectedRole(account.role);
-    setErrorMsg("");
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -78,11 +51,7 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      // Find matching mock account if available to assign role, else fallback to selectedRole or admin
-      const matchingAccount = mockAccounts.find(
-        (acc) => acc.email.toLowerCase() === email.toLowerCase()
-      );
-      const activeRole = matchingAccount ? matchingAccount.role : selectedRole;
+      const activeRole = selectedRole;
 
       const success = await login(email, password, activeRole);
       if (success) {
@@ -206,8 +175,8 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Role select in case custom email is entered */}
-                {!mockAccounts.some(acc => acc.email === email) && email && (
+                {/* Role select */}
+                {email && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -249,45 +218,6 @@ export default function LoginPage() {
             </CardContent>
           </Card>
 
-          {/* QUICK CREDENTIALS GRID */}
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-text-faint uppercase tracking-wider text-center lg:text-left">
-              Quick-Select Demo Roles
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-2.5">
-              {mockAccounts.map((account) => {
-                const Icon = account.icon;
-                const isSelected = email === account.email;
-                return (
-                  <button
-                    key={account.role}
-                    type="button"
-                    onClick={() => handleQuickSelect(account)}
-                    className={cn(
-                      "w-full text-left p-3 rounded-xl border flex items-center gap-3 transition-all duration-300 backdrop-blur-sm cursor-pointer",
-                      isSelected
-                        ? "bg-primary/[0.08] border-primary/40 shadow-sm"
-                        : "bg-card/40 border-border/15 hover:border-border/40 hover:bg-card/60"
-                    )}
-                  >
-                    <div className={cn(
-                      "p-2 rounded-lg",
-                      isSelected ? "bg-primary text-background" : "bg-surface text-text-muted"
-                    )}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-text-main">{account.label}</span>
-                        <span className="text-[9px] font-mono uppercase font-bold text-primary/80">{account.role}</span>
-                      </div>
-                      <span className="text-[10px] text-text-faint block truncate">{account.desc}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
         </div>
       </div>

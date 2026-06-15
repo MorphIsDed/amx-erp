@@ -45,7 +45,6 @@ def save_registry():
         print(f"Failed to save model registry: {e}")
 
 def load_registry():
-    global model_registry
     if os.path.exists(REGISTRY_FILE):
         try:
             with open(REGISTRY_FILE, "r") as f:

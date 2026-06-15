@@ -16,18 +16,29 @@ async function main() {
     },
   });
 
-  // 2. Create Admin User
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@amx-erp.com' },
-    update: {},
-    create: {
-      email: 'admin@amx-erp.com',
-      password,
-      name: 'Admin User',
-      role: Role.ADMIN,
-      tenantId: tenant.id,
-    },
-  });
+  // 2. Create Mock Users
+  const mockUsers = [
+    { email: 'admin@acme.com', name: 'Global Admin', role: Role.ADMIN },
+    { email: 'finance@acme.com', name: 'Finance Manager', role: Role.FINANCE },
+    { email: 'hr@acme.com', name: 'HR Manager', role: Role.HR },
+    { email: 'inventory@acme.com', name: 'Inventory Lead', role: Role.MANAGER },
+    { email: 'guest@acme.com', name: 'Executive Guest', role: Role.EMPLOYEE },
+    { email: 'admin@amx-erp.com', name: 'Admin User', role: Role.ADMIN }, // keep existing
+  ];
+
+  for (const u of mockUsers) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        email: u.email,
+        password,
+        name: u.name,
+        role: u.role,
+        tenantId: tenant.id,
+      },
+    });
+  }
 
   // 3. Create Warehouses
   const warehouseMumbai = await prisma.warehouse.create({

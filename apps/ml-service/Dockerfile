@@ -22,7 +22,7 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 
 COPY --from=builder /root/.local /root/.local
-COPY main.py .
+COPY main.py observability.py ./
 
 EXPOSE 8000
 
