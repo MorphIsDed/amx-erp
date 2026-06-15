@@ -25,7 +25,7 @@ export class NotificationsProcessor extends WorkerHost {
         // await emailService.send(...)
       } else if (channel === 'WEBHOOK') {
         this.logger.log(`Sending WEBHOOK notification for ${notificationId}`);
-        
+
         const notification = await this.prisma.notification.findUnique({
           where: { id: notificationId },
         });
@@ -59,11 +59,15 @@ export class NotificationsProcessor extends WorkerHost {
               });
 
               if (!response.ok) {
-                throw new Error(`HTTP ${response.status} ${response.statusText}`);
+                throw new Error(
+                  `HTTP ${response.status} ${response.statusText}`,
+                );
               }
               this.logger.log(`Successfully dispatched webhook to ${sub.url}`);
             } catch (webhookErr: any) {
-              this.logger.error(`Failed to dispatch webhook to ${sub.url}: ${webhookErr.message}`);
+              this.logger.error(
+                `Failed to dispatch webhook to ${sub.url}: ${webhookErr.message}`,
+              );
               throw webhookErr; // Trigger BullMQ retry
             }
           }

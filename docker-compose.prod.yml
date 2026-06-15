@@ -87,6 +87,17 @@ services:
     depends_on:
       - api
 
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: amx-alertmanager-prod
+    restart: always
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./docker/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+
 volumes:
   postgres_prod_data:
   redis_prod_data:

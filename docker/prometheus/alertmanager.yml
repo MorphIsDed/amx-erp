@@ -1,0 +1,17 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10m
+  repeat_interval: 1h
+  receiver: 'pagerduty'
+
+receivers:
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - routing_key: "${PAGERDUTY_ROUTING_KEY}"
+        class: "software"
+        component: "amx-erp"
+        severity: '{{ if eq .CommonLabels.severity "critical" }}critical{{ else }}warning{{ end }}'

@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -45,6 +49,13 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.3",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "@next/bundle-analyzer": "^14.2.0",
+    "@playwright/test": "^1.43.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^15.0.2",
+    "@vitejs/plugin-react": "^4.2.1",
+    "jsdom": "^24.0.0",
+    "vitest": "^1.5.0"
   }
 }
