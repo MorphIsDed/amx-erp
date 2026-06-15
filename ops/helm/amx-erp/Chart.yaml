@@ -1,0 +1,6 @@
+apiVersion: v2
+name: amx-erp
+description: Helm chart for the AMX-ERP Suite
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-web
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Chart.Name }}-web
+spec:
+  replicas: {{ .Values.replicaCount.web }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-web
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-web
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.image.repository }}-web:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ .Chart.Name }}-config
+          resources:
+            {{- toYaml .Values.resources.web | nindent 12 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Chart.Name }}-web-pdb
+  namespace: {{ .Values.namespace }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-web

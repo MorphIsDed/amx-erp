@@ -1,0 +1,50 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ .Chart.Name }}-gateway
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - {{ .Values.domain }}
+        - "api.{{ .Values.domain }}"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Chart.Name }}-virtual-service
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - {{ .Values.domain }}
+  gateways:
+    - {{ .Chart.Name }}-gateway
+  http:
+    - route:
+        - destination:
+            host: {{ .Chart.Name }}-web-svc
+            port:
+              number: 80
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Chart.Name }}-api-virtual-service
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - "api.{{ .Values.domain }}"
+  gateways:
+    - {{ .Chart.Name }}-gateway
+  http:
+    - route:
+        - destination:
+            host: {{ .Chart.Name }}-api-svc
+            port:
+              number: 80

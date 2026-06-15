@@ -1,0 +1,54 @@
+replicaCount:
+  web: 2
+  api: 2
+  ml: 1
+
+image:
+  repository: my-registry/amx-erp
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+environment: "prod"
+
+namespace: "amx-prod"
+
+resources:
+  api:
+    limits:
+      cpu: "1"
+      memory: "1024Mi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+  web:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+  ml:
+    limits:
+      cpu: "2"
+      memory: "4096Mi"
+    requests:
+      cpu: "1"
+      memory: "2048Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 70
+
+domain: "amx-erp.internal"
+
+postgres:
+  host: "amx-db.local"
+  port: 5432
+  database: "amx_erp"
+
+redis:
+  host: "amx-redis.local"
+  port: 6379

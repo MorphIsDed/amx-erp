@@ -114,3 +114,43 @@ pnpm dev
 - **Fluid Animation:** Avoid linear transitions. Use spring-physics for natural and organic micro-interactions.
 - **Optimistic State Updates:** Always wrap mutating actions in React transitions to deliver responsive feedback.
 - **Strict Linting:** Run `pnpm lint` and `pnpm check-types` before opening a pull request.
+
+---
+
+## ☁️ Infrastructure & Cloud Deployment (Week 4)
+
+AMX-ERP includes comprehensive Infrastructure as Code (IaC) and Kubernetes deployment manifests located in the `ops/` directory.
+
+### 1. Terraform (AWS)
+Provision the core AWS infrastructure (EKS Cluster, RDS Aurora Serverless v2 PostgreSQL 17, and ElastiCache Redis 7.1) using Terraform 1.9+.
+
+```bash
+cd ops/terraform
+terraform init
+terraform plan -out=tfplan
+terraform apply "tfplan"
+```
+
+*Required Environment Variables:*
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION` (default: `us-east-1`)
+
+### 2. Kubernetes & Helm Charts
+The application suite is deployed via a unified Helm chart configured for zero-trust networking (Istio mTLS) and horizontal auto-scaling (HPA).
+
+```bash
+cd ops/helm
+
+# Deploy the AMX-ERP Suite
+helm upgrade --install amx-erp ./amx-erp \
+  --namespace amx-prod \
+  --create-namespace \
+  --set domain=amx-erp.internal \
+  --set autoscaling.enabled=true
+```
+
+**Architecture Topology:**
+- **Ingress:** Istio Gateway routing traffic based on hostnames (`amx-erp.internal` for web, `api.amx-erp.internal` for core).
+- **Workloads:** Next.js Web Frontend, NestJS API Core, and FastAPI ML Service running as separate Deployments.
+- **Resilience:** Configured with Pod Disruption Budgets (minAvailable: 1) and HPAs scaling on >70% CPU/Memory utilization.
